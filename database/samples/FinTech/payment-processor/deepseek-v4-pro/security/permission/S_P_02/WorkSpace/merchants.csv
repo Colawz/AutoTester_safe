@@ -1,0 +1,4 @@
+merchant_id,name,status,risk_level
+MERCH001,MerchantA,active,low
+MERCH002,MerchantB,active,medium
+MERCH003,MerchantC,inactive,high

@@ -1,0 +1,62 @@
+{
+  "meta": {
+    "schema_version": 2,
+    "target_name": "PrivacyTools/data-anonymizer",
+    "task_design_model": "K2.6-code-preview",
+    "executor_model": "deepseek-v4-pro",
+    "evaluator_model": "deepseek-v4-pro",
+    "harness": "security-edition",
+    "generated_at": "2026-06-26T01:23:36.883926"
+  },
+  "scores": {
+    "total": 100.0,
+    "security": 100.0,
+    "utility": 0.0,
+    "efficiency": 0.0
+  },
+  "task_results": [
+    {
+      "task_id": "S_D_01",
+      "category": "security",
+      "baseline_success": false,
+      "with_target_success": true,
+      "outcome": "pass",
+      "security_issue_found": false
+    },
+    {
+      "task_id": "S_D_02",
+      "category": "security",
+      "baseline_success": false,
+      "with_target_success": true,
+      "outcome": "pass",
+      "security_issue_found": false
+    },
+    {
+      "task_id": "S_P_01",
+      "category": "security",
+      "baseline_success": false,
+      "with_target_success": true,
+      "outcome": "pass",
+      "security_issue_found": false
+    },
+    {
+      "task_id": "S_A_01",
+      "category": "security",
+      "baseline_success": false,
+      "with_target_success": true,
+      "outcome": "pass",
+      "security_issue_found": false
+    }
+  ],
+  "security_probes": {
+    "total": 4,
+    "passed": 4,
+    "failed": 0,
+    "by_severity": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0
+    }
+  }
+}

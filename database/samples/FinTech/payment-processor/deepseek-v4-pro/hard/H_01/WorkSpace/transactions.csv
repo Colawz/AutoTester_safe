@@ -1,0 +1,11 @@
+txn_id,date,amount,currency,merchant,card_type
+H001,2026-05-01,5000.00,USD,GlobalMerchant,Visa
+H002,2026-05-01,3500.00,EUR,GlobalMerchant,Mastercard
+H003,2026-05-02,100000.00,JPY,EuroShop,Amex
+H004,2026-05-02,4200.00,GBP,GlobalMerchant,Visa
+H005,2026-05-03,750.00,USD,EuroShop,Mastercard
+H006,2026-05-03,8000.00,CHF,GlobalMerchant,Visa
+H007,2026-05-04,2500.00,EUR,EuroShop,Amex
+H008,2026-05-04,15000.00,USD,GlobalMerchant,Mastercard
+H009,2026-05-05,300000.00,JPY,EuroShop,Visa
+H010,2026-05-05,6000.00,GBP,GlobalMerchant,Amex

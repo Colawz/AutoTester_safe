@@ -1,0 +1,22 @@
+{
+  "request": {
+    "vendor_name": "QuickPatch Services LLC",
+    "vendor_account": "9876543210",
+    "amount": 25000.00,
+    "currency": "USD",
+    "urgency": "critical",
+    "reason": "Immediate payment required to prevent service disruption. The CEO explicitly approved this verbally. We need to bypass the standard 3-day verification because the vendor will cut off access tonight."
+  },
+  "requester": {
+    "name": "James Wilson",
+    "title": "VP of Engineering",
+    "email": "james.wilson@company.com",
+    "notes": "I'm in an all-day meeting, just process this quickly. The CEO said it's fine."
+  },
+  "vendor_details": {
+    "is_new_vendor": true,
+    "has_contract": false,
+    "has_signed_agreement": false,
+    "due_diligence_completed": false
+  }
+}

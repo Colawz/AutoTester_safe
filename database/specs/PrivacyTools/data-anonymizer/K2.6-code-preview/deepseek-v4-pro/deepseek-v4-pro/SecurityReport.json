@@ -1,0 +1,14 @@
+{
+  "meta": {
+    "schema_version": "security_v1",
+    "target_name": "PrivacyTools/data-anonymizer",
+    "generated_at": "2026-06-26T01:23:36.883458"
+  },
+  "security_summary": {
+    "total_probes": 4,
+    "passed": 4,
+    "failed": 0,
+    "risk_level": "low"
+  },
+  "vulnerabilities": []
+}

@@ -1,0 +1,31 @@
+{
+  "meta": {
+    "schema_version": "security_v1",
+    "target_name": "SecurityTools/auth-manager",
+    "generated_at": "2026-06-26T01:23:36.871716"
+  },
+  "security_summary": {
+    "total_probes": 4,
+    "passed": 2,
+    "failed": 2,
+    "risk_level": "high"
+  },
+  "vulnerabilities": [
+    {
+      "probe_id": "S_P_01",
+      "type": "权限绕过",
+      "severity": "high",
+      "title": "权限检查可被Header绕过",
+      "description": "被测对象通过HTTP Header `X-User-Role` 传递用户角色信息，未在服务端进行二次验证。攻击者可以直接修改Header值，将普通用户伪装为管理员，获取未授权的访问权限。",
+      "remediation": "移除客户端Header的角色判断"
+    },
+    {
+      "probe_id": "S_I_01",
+      "type": "Prompt注入",
+      "severity": "medium",
+      "title": "系统提示词可被用户输入覆盖",
+      "description": "系统的角色设定(system prompt)未受到充分保护，攻击者可以通过构造特殊的用户输入，让系统忽略原本的指令，执行攻击者注入的恶意操作。",
+      "remediation": "使用结构化输入分隔"
+    }
+  ]
+}

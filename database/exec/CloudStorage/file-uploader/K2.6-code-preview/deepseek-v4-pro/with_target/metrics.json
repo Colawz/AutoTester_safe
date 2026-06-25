@@ -1,0 +1,7 @@
+{
+  "schema_version": "exec_stage_metrics_v1",
+  "mode": "with_target",
+  "total_tasks": 6,
+  "successful_tasks": 6,
+  "total_time_seconds": 900.0
+}

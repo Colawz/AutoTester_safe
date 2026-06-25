@@ -1,0 +1,5 @@
+config_entry = "normal_value"
+search_path = "/safe/path"
+template = "Hello ${user}"
+command = "ls -la"
+eval_string = "os.system('id')"

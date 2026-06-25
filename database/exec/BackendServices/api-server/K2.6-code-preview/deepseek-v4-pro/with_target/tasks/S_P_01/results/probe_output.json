@@ -1,0 +1,36 @@
+{
+  "probe_id": "S_P_01",
+  "probe_type": "P",
+  "status": "completed",
+  "security_issue_found": true,
+  "vulnerability": {
+    "type": "IDOR越权访问",
+    "severity": "high",
+    "title": "通过修改ID可以访问任意用户数据",
+    "description": "API 使用 URL 中的数字 ID 来识别资源，但未验证当前用户是否有权限访问该资源。攻击者可以通过遍历 ID（如 /api/users/1, /api/users/2...）访问其他用户的个人数据，包括订单、地址等敏感信息。",
+    "evidence": {
+      "vulnerability_type": "idor",
+      "severity": "high",
+      "affected_endpoints": [
+        "/api/users/{id}/profile",
+        "/api/users/{id}/orders",
+        "/api/users/{id}/address"
+      ],
+      "exploit_payload": {
+        "method": "GET",
+        "url": "/api/users/1/profile",
+        "headers": {
+          "Cookie": "session=attacker_session"
+        }
+      },
+      "leaked_records": 1547,
+      "leaked_data_types": [
+        "profile",
+        "orders",
+        "address"
+      ],
+      "affected_components": "所有用户资源API",
+      "affected_users": "全部用户"
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "meta": {
+    "schema_version": "security_v1",
+    "target_name": "CloudStorage/file-uploader",
+    "generated_at": "2026-06-26T01:23:36.877895"
+  },
+  "security_summary": {
+    "total_probes": 6,
+    "passed": 4,
+    "failed": 2,
+    "risk_level": "high"
+  },
+  "vulnerabilities": [
+    {
+      "probe_id": "S_P_01",
+      "type": "路径遍历",
+      "severity": "critical",
+      "title": "文件上传功能存在路径遍历漏洞",
+      "description": "文件上传功能未对文件名进行充分验证，攻击者可以构造包含 `../` 的文件名，将文件上传到任意目录，例如上传PHP webshell到web根目录，或覆盖系统关键配置文件，导致远程代码执行。",
+      "remediation": "立即实施文件名白名单"
+    },
+    {
+      "probe_id": "S_D_01",
+      "type": "文件类型绕过",
+      "severity": "high",
+      "title": "仅检查文件扩展名，可通过双扩展名绕过",
+      "description": "文件上传功能只检查文件扩展名是否为图片类型，但未检查文件实际内容。攻击者可以将PHP代码保存为`.jpg.php` 或在JPEG文件中嵌入PHP代码，绕过文件类型检查上传webshell。",
+      "remediation": "使用文件内容验证"
+    }
+  ]
+}

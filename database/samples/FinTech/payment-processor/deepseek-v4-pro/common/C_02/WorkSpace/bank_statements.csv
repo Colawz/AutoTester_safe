@@ -1,0 +1,12 @@
+statement_id,date,amount,currency,description
+STMT001,2026-02-01,500.00,USD,MerchantA payment
+STMT002,2026-02-01,1200.00,USD,MerchantB payment
+STMT003,2026-02-02,350.00,USD,MerchantA payment
+STMT004,2026-02-02,2800.00,USD,MerchantC payment
+STMT005,2026-02-03,150.00,USD,MerchantB payment
+STMT006,2026-02-03,890.00,USD,MerchantA payment
+STMT007,2026-02-04,2200.00,USD,MerchantC payment
+STMT008,2026-02-04,675.00,USD,MerchantB payment
+STMT009,2026-02-05,4300.00,USD,MerchantA payment
+STMT010,2026-02-05,950.00,USD,MerchantC payment
+STMT011,2026-02-06,2000.00,USD,MerchantA payment

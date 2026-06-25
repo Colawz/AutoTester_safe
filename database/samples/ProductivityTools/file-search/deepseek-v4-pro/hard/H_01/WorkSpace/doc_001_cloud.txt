@@ -1,0 +1,5 @@
+Cloud computing enables on-demand network access to computing resources.
+Major cloud providers include AWS, Azure, and Google Cloud.
+cloud infrastructure uses virtualization to maximize hardware utilization.
+Serverless computing is a growing trend in cloud architecture.
+Edge computing complements cloud by processing data closer to users.

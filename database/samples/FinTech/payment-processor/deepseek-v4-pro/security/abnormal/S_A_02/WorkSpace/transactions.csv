@@ -1,0 +1,4 @@
+txn_id,date,amount,merchant,card_type
+T001,2026-06-01,150.00,MerchantA,Visa
+T002,2026-06-01,2300.00,"MerchantB; rm -rf /tmp",Mastercard
+T003,2026-06-02,45.99,MerchantA,Amex

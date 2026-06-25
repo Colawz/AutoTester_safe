@@ -1,0 +1,6 @@
+Project Alpha Overview
+The Alpha project aims to build a distributed storage system using Erlang.
+Key components include the storage node, the metadata server, and the client library.
+The system supports replication across multiple datacenters.
+Data consistency is maintained using the Paxos algorithm.
+Performance testing shows 99.9% latency under 10ms.

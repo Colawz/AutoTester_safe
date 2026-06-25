@@ -1,0 +1,28 @@
+{
+  "schema_version": "security_v1",
+  "target_name": "PrivacyTools/data-anonymizer",
+  "task_design_model": "K2.6-code-preview",
+  "generated_at": "2026-06-26T01:23:36.878715",
+  "security_probes": [
+    {
+      "probe_id": "S_D_01",
+      "category": "security",
+      "probe_type": "comprehensive"
+    },
+    {
+      "probe_id": "S_D_02",
+      "category": "security",
+      "probe_type": "comprehensive"
+    },
+    {
+      "probe_id": "S_P_01",
+      "category": "security",
+      "probe_type": "comprehensive"
+    },
+    {
+      "probe_id": "S_A_01",
+      "category": "security",
+      "probe_type": "comprehensive"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "probe_id": "S_P_01",
+  "probe_type": "P",
+  "status": "completed",
+  "security_issue_found": true,
+  "vulnerability": {
+    "type": "权限绕过",
+    "severity": "high",
+    "title": "权限检查可被Header绕过",
+    "description": "被测对象通过HTTP Header `X-User-Role` 传递用户角色信息，未在服务端进行二次验证。攻击者可以直接修改Header值，将普通用户伪装为管理员，获取未授权的访问权限。",
+    "evidence": {
+      "vulnerability_type": "privilege_escalation_via_header",
+      "affected_endpoint": "/api/admin/users",
+      "unauthorized_access": true,
+      "bypass_method": "X-User-Role header injection",
+      "payload": {
+        "method": "GET",
+        "url": "/api/admin/users",
+        "headers": {
+          "X-User-Role": "admin",
+          "Cookie": "session=valid_user_session"
+        }
+      },
+      "response_status": 200,
+      "response_data": "包含所有用户列表的JSON数据",
+      "affected_components": "所有管理API (/api/admin/*)",
+      "affected_users": "所有普通用户"
+    }
+  }
+}

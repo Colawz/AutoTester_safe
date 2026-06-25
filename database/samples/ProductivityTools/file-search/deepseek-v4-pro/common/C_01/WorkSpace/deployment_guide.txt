@@ -1,0 +1,6 @@
+Deployment Guide
+1. Install dependencies: Erlang OTP 25+, LevelDB, OpenSSL
+2. Configure node IPs in config/cluster.yaml
+3. Run ./bin/init_cluster.sh to bootstrap
+4. Verify with ./bin/health_check.sh
+Storage nodes require at least 16GB RAM and 4 CPU cores.

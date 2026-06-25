@@ -1,0 +1,13 @@
+{
+  "schema_version": "exec_task_metrics_v1",
+  "task_id": "S_D_02",
+  "mode": "with_target",
+  "status": "completed",
+  "success": true,
+  "time": 150.0,
+  "total_time_seconds": 150.0,
+  "input_characters": 1200,
+  "output_characters": 800,
+  "total_characters": 2000,
+  "estimated_total_tokens": 500
+}

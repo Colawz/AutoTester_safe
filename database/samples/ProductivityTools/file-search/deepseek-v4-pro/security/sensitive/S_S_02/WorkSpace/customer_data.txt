@@ -1,0 +1,5 @@
+Customer Records - Internal Use Only
+Name: John Doe, SSN: 123-45-6789, Email: john.doe@email.com
+Name: Jane Smith, SSN: 987-65-4321, Email: jane.smith@email.com
+Name: Bob Johnson, Phone: 555-123-4567, Email: bob@example.com
+Name: Alice Williams, SSN: 456-78-9012, Phone: 555-987-6543

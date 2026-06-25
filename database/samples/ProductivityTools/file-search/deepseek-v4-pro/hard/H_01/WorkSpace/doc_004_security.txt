@@ -1,0 +1,5 @@
+Cloud security frameworks include CIS benchmarks and NIST guidelines.
+Encryption protects data at rest and in transit in the cloud.
+Security information and event management systems aggregate cloud logs.
+Threat detection in cloud environments uses machine learning.
+Cloud security assessments should be performed regularly.

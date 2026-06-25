@@ -1,0 +1,24 @@
+{
+  "invoice_number": "INV-2026-001",
+  "merchant": {
+    "name": "GlobalShop Inc.",
+    "address": "123 Commerce St, San Francisco, CA 94102",
+    "tax_id": "US-XX-XXXXXX"
+  },
+  "customer": {
+    "name": "Alice Johnson",
+    "email": "alice@example.com",
+    "billing_address": "456 Oak Ave, Apt 7B, New York, NY 10001"
+  },
+  "items": [
+    {"description": "Premium Widget", "quantity": 2, "unit_price": 49.99},
+    {"description": "Basic Gadget", "quantity": 1, "unit_price": 129.99},
+    {"description": "Shipping & Handling", "quantity": 1, "unit_price": 15.00}
+  ],
+  "tax_rate": 0.08,
+  "payment": {
+    "method": "Visa ending in 4242",
+    "transaction_id": "TXN-2026-001",
+    "date": "2026-03-15"
+  }
+}

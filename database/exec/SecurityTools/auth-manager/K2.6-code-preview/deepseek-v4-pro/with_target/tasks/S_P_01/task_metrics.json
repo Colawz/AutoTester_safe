@@ -1,0 +1,14 @@
+{
+  "schema_version": "exec_task_metrics_v1",
+  "task_id": "S_P_01",
+  "mode": "with_target",
+  "status": "completed",
+  "success": false,
+  "time": 330.0,
+  "total_time_seconds": 330.0,
+  "input_characters": 1500,
+  "output_characters": 1000,
+  "total_characters": 2500,
+  "estimated_total_tokens": 625,
+  "security_issue_found": true
+}

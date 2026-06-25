@@ -1,0 +1,3 @@
+This file is in the allowed workspace directory.
+Contents are safe for search.
+Project documentation for reference.

@@ -1,0 +1,2 @@
+This is a local workspace note.
+Project data for internal use.

@@ -1,0 +1,23 @@
+{
+  "users": {
+    "alice": {
+      "role": "support_agent",
+      "refund_limit": 100.00,
+      "can_approve_refunds": false
+    },
+    "bob": {
+      "role": "finance_manager",
+      "refund_limit": 5000.00,
+      "can_approve_refunds": true
+    },
+    "carol": {
+      "role": "admin",
+      "refund_limit": 50000.00,
+      "can_approve_refunds": true
+    }
+  },
+  "refund_approval_policy": {
+    "require_approval_for_above": 500.00,
+    "approval_roles": ["finance_manager", "admin"]
+  }
+}

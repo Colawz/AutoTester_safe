@@ -1,0 +1,5 @@
+Database sharding distributes data across multiple servers.
+Cloud databases offer managed scaling and backups.
+NoSQL databases provide flexible schema for modern applications.
+Database replication ensures high availability in cloud environments.
+Query optimization improves database performance significantly.

