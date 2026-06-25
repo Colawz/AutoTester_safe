@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoTester</title>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<!-- Header -->
+<header>
+  <h1>AutoTester</h1>
+  <p>通用 Agent Harness 自动化评测工具</p>
+</header>
+
+<!-- Tab Bar -->
+<div style="display:flex;gap:8px;margin-bottom:14px;align-items:center;flex-wrap:wrap">
+  <button class="tab-btn active" data-panel="targets" onclick="switchPanel('targets',this)">🎯 Targets</button>
+  <button class="tab-btn" data-panel="monitor" onclick="switchPanel('monitor',this)">🖥 Monitor <span id="monitorBadge" style="font-size:.7rem;opacity:.7"></span></button>
+  <button class="tab-btn" data-panel="autotest" onclick="switchPanel('autotest',this)">⚡ AutoTest</button>
+  <span style="flex:1"></span>
+  <a href="/reports" class="btn btn-neutral" style="text-decoration:none">📊 Reports</a>
+  <button class="btn btn-neutral" onclick="refreshTargets()">🔄 Refresh</button>
+</div>
+
+<!-- Harness + Exec Mode Bar -->
+<div class="panel active">
+  <div class="runner-bar">
+    <div>
+      <div class="runner-title">Harness &amp; Exec Mode</div>
+      <div class="runner-hint">选择执行器与轨道模式。Single 仅跑 WithTarget；Dual 同时跑 Baseline + WithTarget。</div>
+    </div>
+    <div class="runner-actions">
+      <div id="harnessBtns" style="display:flex;gap:6px"></div>
+      <span style="color:#94a3b8;font-weight:700;font-size:.82rem;align-self:center">Exec:</span>
+      <button class="runner-btn active" id="modeSingle" onclick="setExecMode('single')">Single</button>
+      <button class="runner-btn" id="modeDual" onclick="setExecMode('dual')">Dual</button>
+      <span class="badge" id="harnessBadge" style="margin-left:6px">opencode</span>
+    </div>
+  </div>
+</div>
+
+<!-- Stats Bar -->
+<div class="stats-bar" id="statsRow"></div>
+
+<!-- Targets Panel -->
+<section id="panel-targets" class="panel active">
+  <div class="filter-group">
+    <button class="filter-btn active" onclick="filterTargets(this,'status','')">全部</button>
+    <button class="filter-btn" onclick="filterTargets(this,'status','completed')">全部完成</button>
+    <button class="filter-btn" onclick="filterTargets(this,'status','exec_completed')">执行完成</button>
+    <button class="filter-btn" onclick="filterTargets(this,'status','sample_completed')">样本完成</button>
+    <button class="filter-btn" onclick="filterTargets(this,'status','new')">未开始</button>
+    <span style="margin-left:12px"></span>
+    <button class="filter-btn active" onclick="filterTargets(this,'source','')">All Sources</button>
+  </div>
+  <div class="action-bar">
+    <button class="btn btn-sample" onclick="openAddModal()">+ 添加新测试</button>
+    <button class="btn btn-neutral" onclick="refreshTargets()">🔄 刷新</button>
+  </div>
+  <div class="cards" id="cards"></div>
+</section>
+
+<!-- Monitor Panel -->
+<section id="panel-monitor" class="panel">
+  <div class="action-bar"><h2>Active Tmux Sessions</h2><button class="btn btn-neutral" onclick="refreshTmux()">🔄 刷新</button><span style="flex:1"></span><button class="btn btn-danger" onclick="killAllSessions()">✕ Kill All</button></div>
+  <div id="tmuxContent"><p style="color:#64748b;text-align:center;padding:32px">Loading...</p></div>
+</section>
+
+<!-- AutoTest Panel -->
+<section id="panel-autotest" class="panel">
+  <!-- Agents Configuration -->
+  <div class="action-bar" style="margin-bottom:10px"><h2>Agents 配置</h2></div>
+  <div class="cards" id="agentsCards" style="margin-bottom:18px;grid-template-columns:repeat(auto-fill,minmax(280px,1fr))">
+    <div style="color:#64748b;padding:12px">Loading agents...</div>
+  </div>
+
+  <div class="autotest-panel">
+    <div class="autotest-controls">
+      <div class="autotest-field"><label>Stage</label>
+        <select id="atStage" class="autotest-input"><option value="exec">Exec</option><option value="sample">Sample</option><option value="spec">Spec</option></select>
+      </div>
+      <div class="autotest-field"><label>Scope</label>
+        <select id="atScope" class="autotest-input"><option value="stage_pending">Stage Pending</option><option value="new">New</option><option value="partial">Partial</option></select>
+      </div>
+      <div class="autotest-field"><label>Test Mode</label>
+        <select id="atMode" class="autotest-input"><option value="full">Full</option><option value="baseline">Baseline Only</option><option value="with_target">WithTarget Only</option></select>
+      </div>
+      <div class="autotest-grid-2">
+        <button class="btn btn-success" onclick="startAutoTest()">▶ Start</button>
+        <button class="btn btn-danger" onclick="stopAutoTest()">■ Stop</button>
+      </div>
+    </div>
+    <div>
+      <div class="autotest-field"><label>Status</label></div>
+      <pre id="autotestStatus" class="autotest-log" style="min-height:200px">Not running</pre>
+    </div>
+  </div>
+</section>
+
+<!-- Add Target Modal -->
+<dialog id="addModal"><div class="modal-wrap">
+  <div class="detail-header"><div class="detail-title">添加新测试</div><button class="detail-close" onclick="closeAddModal()">Close</button></div>
+  <form id="addForm" onsubmit="submitTarget(event)">
+    <div class="autotest-field"><label>测试名称 <span class="req">*</span></label>
+      <input type="text" id="targetName" class="autotest-input" placeholder="来源/名称  例: DemoProject/my-tool" required>
+      <small>在 TargetsRepo 下创建对应目录</small>
+    </div>
+    <div class="autotest-field"><label>需求描述 <span class="req">*</span></label>
+      <textarea id="targetDesc" class="autotest-input" rows="8" placeholder="描述被测对象的能力、使用方式、预期行为、约束条件...&#10;&#10;支持 Markdown。" required></textarea>
+    </div>
+    <div class="autotest-field"><label>原始数据（可选 .zip）</label>
+      <input type="file" id="targetZip" class="autotest-input" accept=".zip">
+      <small>上传后自动解压到 source/ 目录</small>
+    </div>
+    <div class="modal-actions"><button type="button" class="btn btn-neutral" onclick="closeAddModal()">取消</button><button type="submit" class="btn btn-primary">确认创建</button></div>
+  </form>
+</div></dialog>
+
+<div id="toast" class="toast"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>

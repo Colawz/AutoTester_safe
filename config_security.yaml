@@ -1,0 +1,134 @@
+# AutoTester Security Edition - 安全测试特化版配置
+version: "1.0-security"
+
+# 数据路径
+paths:
+  database_root: ./database
+  targets_root: ./TargetsRepo
+  logs_root: ./logs
+  runtime_root: ./.runtime
+
+# 默认 Harness
+default_harness: opencode
+
+# Harness 配置
+harnesses:
+  opencode:
+    display_name: OpenCode
+    command_template: opencode run --dir {workspace} "$(cat {prompt_file})"
+    default_model: K2.6-code-preview
+    enabled: true
+  claude:
+    display_name: Claude Code
+    command_template: claude --print --verbose --dangerously-skip-permissions --output-format stream-json --include-partial-messages --add-dir {base_dir} "$(cat {prompt_file})"
+    default_model: claude-sonnet-4-6
+    enabled: true
+
+# Stage 配置 - 安全测试特化版
+stages:
+  sample:
+    enabled: true
+    timeout_seconds: 600
+    label: Sample Stage - Security Probes Only
+    config:
+      # 安全测试特化：只生成安全探针
+      security_only: true
+      categories: ["security"]
+      # 不生成功能任务
+      generate_functional_tasks: false
+
+  exec:
+    enabled: true
+    timeout_seconds: 1800
+    max_retries: 0
+    label: Exec Stage - Security Testing
+    stagger_seconds: 30
+    default_mode: single
+    config:
+      # 简化产物：移除时间/token统计
+      simplified_output: true
+      # 安全测试专用产物
+      security_focused: true
+
+  spec:
+    enabled: true
+    timeout_seconds: 900
+    label: Spec Stage - Security Analysis
+    default_mode: security_only
+    dimensions:
+      security:
+        enabled: true
+        metrics:
+          - vulnerability_detection_rate
+          - exploit_success_rate
+          - security_boundary_violation
+      utility:
+        enabled: false  # 安全测试不评估实用性
+      efficiency:
+        enabled: false  # 安全测试不评估效率
+
+# AutoTest 调度
+autotest:
+  poll_interval_seconds: 30
+  max_concurrent_sessions: 5
+  candidate_mode: pending
+  scope: stage_pending
+  default_stage: exec
+
+# Agents 配置 - 安全测试特化版
+agents:
+  sample:
+    name: SampleAgent-Security
+    description: 生成安全探针，测试被测对象的安全性边界
+    model: deepseek-v4-pro
+    config:
+      # 只生成安全探针
+      security_probes_only: true
+      # 探针类型
+      probe_types:
+        - abnormal_behavior      # 异常行为
+        - permission_boundary    # 权限边界
+        - sensitive_data         # 敏感数据泄露
+        - injection_attacks      # 注入攻击
+        - resource_abuse         # 资源滥用
+
+  exec:
+    name: ExecAgent-Security
+    description: 执行安全探针，记录安全问题详细分析
+    model: deepseek-v4-pro
+    config:
+      # 简化输出
+      simplified_metrics: true
+      # 详细安全问题描述
+      detailed_security_logging: true
+      # 发现问题时的深度分析
+      deep_analysis_on_finding: true
+
+  spec:
+    name: SpecAgent-Security
+    description: 汇总安全测试结果，生成安全评估报告
+    model: deepseek-v4-pro
+    config:
+      # 安全分析模式
+      security_analysis_mode: true
+      # 风险评估
+      risk_assessment: true
+      # 修复建议生成
+      generate_remediation: true
+
+# Server 配置
+server:
+  host: 127.0.0.1
+  port: 8701
+  max_upload_size_mb: 50
+
+# 报告配置
+report:
+  formats:
+    - markdown
+    - json
+  output:
+    security_only_mode:
+      - results/SecurityReport.json
+      - results/SecurityReport.md
+      - results/VulnerabilitySummary.csv
