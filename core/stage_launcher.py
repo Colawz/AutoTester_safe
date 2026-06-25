@@ -80,7 +80,10 @@ def launch_stage(
     """
     harness_name = harness_name.strip().lower()
 
-    if not tmux_exists():
+    shell = detect_shell()
+    is_windows = not shell.is_unix
+
+    if not is_windows and not tmux_exists():
         return {
             "success": False,
             "error": (
@@ -89,7 +92,6 @@ def launch_stage(
             ),
         }
 
-    shell = detect_shell()
     jobs = _get_stage_jobs(stage)
 
     if only_job_id is not None:
@@ -141,7 +143,6 @@ def launch_stage(
             window_name = build_tmux_window_name(str(job["job_id"]), index)
             job_dir = run_root / window_name
             prompt_path = job_dir / "prompt.txt"
-            script_path = job_dir / "run.sh"
             log_path = job_dir / "pane.log"
 
             prompt_path.parent.mkdir(parents=True, exist_ok=True)
@@ -156,27 +157,49 @@ def launch_stage(
                 api_key=api_key,
             )
 
-            write_tmux_job_script(
-                script_path=script_path,
-                launch_cwd=launch_cwd,
-                mkdir_paths=mkdir_paths,
-                env_exports=env_exports,
-                runner_command=runner_command,
-                title=window_title,
-                shell=shell,
-            )
-
-            launched_jobs.append(
-                open_tmux_window(
-                    session_name=session_name,
-                    window_name=window_name,
-                    title=window_title,
+            if is_windows:
+                # Windows: write .ps1 and launch via subprocess.Popen
+                script_path = job_dir / "run.ps1"
+                _write_windows_job_script(
                     script_path=script_path,
-                    log_path=log_path,
-                    prompt_path=prompt_path,
-                    create_session=(index == 0),
+                    launch_cwd=launch_cwd,
+                    mkdir_paths=mkdir_paths,
+                    env_exports=env_exports,
+                    runner_command=runner_command,
+                    title=window_title,
                 )
-            )
+
+                result = _open_windows_terminal(
+                    window_title=window_title,
+                    script_path=script_path,
+                    launch_cwd=launch_cwd,
+                )
+                launched_jobs.append(result)
+
+            else:
+                # Unix: write .sh and launch via tmux
+                script_path = job_dir / "run.sh"
+                write_tmux_job_script(
+                    script_path=script_path,
+                    launch_cwd=launch_cwd,
+                    mkdir_paths=mkdir_paths,
+                    env_exports=env_exports,
+                    runner_command=runner_command,
+                    title=window_title,
+                    shell=shell,
+                )
+
+                launched_jobs.append(
+                    open_tmux_window(
+                        session_name=session_name,
+                        window_name=window_name,
+                        title=window_title,
+                        script_path=script_path,
+                        log_path=log_path,
+                        prompt_path=prompt_path,
+                        create_session=(index == 0),
+                    )
+                )
 
             # Stagger between windows
             if index < len(jobs) - 1:
@@ -186,22 +209,38 @@ def launch_stage(
         stage_config = get_stage_config(stage)
         launch_label = jobs[0]["label"] if len(jobs) == 1 else stage_config.get("label", stage)
 
-        return {
-            "success": True,
-            "message": (
-                f"{adapter.display_name} launched for {target_name} "
-                f"({launch_label}, {len(launched_jobs)} tmux window(s)). "
-                f"Attach with: tmux attach -t {session_name}"
-            ),
-            "harness": harness_name,
-            "stage": stage,
-            "job_scope": only_job_id or "all",
-            "database_root": str(database_dir),
-            "tmux_session": session_name,
-            "attach_command": f"tmux attach -t {session_name}",
-            "run_root": str(run_root),
-            "launched_jobs": launched_jobs,
-        }
+        if is_windows:
+            return {
+                "success": True,
+                "message": (
+                    f"{adapter.display_name} launched for {target_name} "
+                    f"({launch_label}, {len(launched_jobs)} terminal window(s)). "
+                ),
+                "harness": harness_name,
+                "stage": stage,
+                "job_scope": only_job_id or "all",
+                "database_root": str(database_dir),
+                "session_name": session_name,
+                "run_root": str(run_root),
+                "launched_jobs": launched_jobs,
+            }
+        else:
+            return {
+                "success": True,
+                "message": (
+                    f"{adapter.display_name} launched for {target_name} "
+                    f"({launch_label}, {len(launched_jobs)} tmux window(s)). "
+                    f"Attach with: tmux attach -t {session_name}"
+                ),
+                "harness": harness_name,
+                "stage": stage,
+                "job_scope": only_job_id or "all",
+                "database_root": str(database_dir),
+                "tmux_session": session_name,
+                "attach_command": f"tmux attach -t {session_name}",
+                "run_root": str(run_root),
+                "launched_jobs": launched_jobs,
+            }
 
     except NotImplementedError as exc:
         return {"success": False, "error": str(exc)}
@@ -307,3 +346,99 @@ def launch_spec_stage(
     result = launch_stage(target_name, "spec", harness_name, api_key=api_key)
     result["database_cleanup"] = cleanup
     return result
+
+
+# ── Windows helpers ────────────────────────────────────────────────────────
+
+def _write_windows_job_script(
+    *,
+    script_path: Path,
+    launch_cwd: Path,
+    mkdir_paths: list[Path],
+    env_exports: dict[str, str],
+    runner_command: str,
+    title: str,
+) -> None:
+    """Write a PowerShell script for Windows terminal launch."""
+    script_path.parent.mkdir(parents=True, exist_ok=True)
+
+    mkdir_lines = "\n".join(
+        f'New-Item -ItemType Directory -Force -Path "{p}" | Out-Null'
+        for p in mkdir_paths
+    )
+
+    export_lines = "\n".join(
+        f'$env:{key} = "{value}"'
+        for key, value in env_exports.items()
+        if str(value or "").strip()
+    )
+
+    script = f"""# AutoTester Job Script
+# Title: {title}
+
+Write-Host "========================================"
+Write-Host "  AutoTester - {title}"
+Write-Host "========================================"
+Write-Host "Started at: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss zzz')"
+
+{mkdir_lines}
+
+Set-Location "{launch_cwd}"
+{export_lines}
+
+Write-Host "Working directory: $(Get-Location)"
+Write-Host "========================================"
+
+{runner_command}
+
+Write-Host "========================================"
+Write-Host "Finished at: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss zzz')"
+Write-Host "Exit status: $LASTEXITCODE"
+Write-Host "Press any key to close this window..."
+$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+"""
+
+    script_path.write_text(script, encoding="utf-8")
+
+
+def _open_windows_terminal(
+    *,
+    window_title: str,
+    script_path: Path,
+    launch_cwd: Path,
+) -> dict[str, Any]:
+    """Open a new PowerShell window on Windows."""
+    import platform as _plat
+
+    powershell = "powershell.exe"
+    system_root = os.environ.get("SystemRoot", "C:\\Windows")
+    candidate = Path(system_root) / "System32" / "WindowsPowerShell" / "v1.0" / "powershell.exe"
+    if candidate.exists():
+        powershell = str(candidate)
+    elif shutil.which("pwsh.exe"):
+        powershell = "pwsh.exe"
+
+    cmd = [
+        powershell,
+        "-NoLogo",
+        "-NoExit",
+        "-ExecutionPolicy", "Bypass",
+        "-File", str(script_path),
+    ]
+
+    try:
+        process = subprocess.Popen(
+            cmd,
+            cwd=str(launch_cwd),
+            creationflags=subprocess.CREATE_NEW_CONSOLE,
+        )
+    except (AttributeError, OSError):
+        process = subprocess.Popen(cmd, cwd=str(launch_cwd))
+
+    return {
+        "success": True,
+        "title": window_title,
+        "pid": process.pid,
+        "script_path": str(script_path),
+        "terminal": "powershell",
+    }

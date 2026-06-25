@@ -67,10 +67,10 @@ def route_autotest_status():
 def route_autotest_start():
     """POST /api/autotest/start — start the AutoTest controller."""
     shell = detect_shell()
-    if not shell.supports_tmux:
+    if shell.is_unix and not shell.supports_tmux:
         return jsonify({
             "success": False,
-            "error": "AutoTest requires tmux. Not available on this platform.",
+            "error": "AutoTest requires tmux on Unix. Install tmux first.",
         }), 400
 
     try:
@@ -169,10 +169,17 @@ def route_autotest_auto_run():
     from core.shell_detect import detect_shell
 
     shell = detect_shell()
-    if not shell.supports_tmux:
+    # Auto-Run controller currently uses tmux for session management.
+    # On Windows, use the manual stage buttons instead.
+    if shell.is_unix and not shell.supports_tmux:
         return jsonify({
             "success": False,
-            "error": "Auto-Run requires tmux. Not available on this platform.",
+            "error": "Auto-Run requires tmux. Install tmux first.",
+        }), 400
+    elif not shell.is_unix:
+        return jsonify({
+            "success": False,
+            "error": "Auto-Run controller is not supported on Windows yet. Please use the Sample/Exec/Spec buttons manually.",
         }), 400
 
     try:
