@@ -499,54 +499,68 @@ def classify_tmux_session_health_light(
     stage: str = "",
 ) -> dict[str, Any]:
     """
-    Lightweight health classifier - no pane capture for fast UI.
-    Uses window state from tmux list-panes output directly.
+    Health classifier for tmux sessions. Aligned with reference dashboard.
 
-    Aligned with reference dashboard logic:
-    1. If all panes are dead with exit_status 0 -> Done
-    2. If any pane is dead with non-zero exit -> Failed/Dead
-    3. Otherwise check if session is still active in tmux
+    State machine:
+    1. Capture pane tail → look for "Exit status: N"
+    2. Exit status found:
+       - non-zero → Failed
+       - zero in all panes → Done
+       - zero in some panes → Running (others still running)
+    3. No exit status + dead panes with status 0 → Done
+    4. No exit status + dead panes unexpectedly → Dead
+    5. No exit status + pane alive → Running
     """
     import re
 
     windows = session.get("windows", [])
     panes = [w for w in windows if isinstance(w, dict)]
     dead_panes = [p for p in panes if p.get("dead")]
-    targets = [str(p.get("target") or "").strip() for p in panes]
+    targets = [str(p.get("target") or "").strip() for p in panes if str(p.get("target") or "").strip()]
 
     status = "running"
     label = "Running"
     detail = "pane is active"
     exit_status: int | None = None
+    tails: list[str] = []
+    pane_exit_statuses: list[int] = []
 
-    # Check if database shows this stage is done (most authoritative)
-    # If done in DB, the session is Done regardless of tmux state
-    if target_name and stage:
-        try:
-            from core.scanner import check_database
-            db_status = check_database(target_name)
-            stage_info = db_status.get("stages", {}).get(stage, {})
-            db_label = stage_info.get("label", "pending")
-            if db_label == "done":
-                status = "done"
-                label = "Done"
-                detail = f"stage '{stage}' completed in database"
-                return {
-                    "status": status,
-                    "label": label,
-                    "detail": detail,
-                    "target": targets[0] if targets else "",
-                    "exit_status": 0,
-                    "tail": "",
-                    "targets": targets,
-                }
-        except Exception:
-            pass
+    # Capture first pane only (performance: 1 capture, not 6)
+    for pane_target in targets[:1]:
+        captured = capture_tmux_pane(pane_target, line_count=80)
+        if not captured.get("success"):
+            continue
+        pane_tail = str(captured.get("content", ""))
+        tails.append(pane_tail)
+        m = re.search(r"Exit status:\s*(-?\d+)", pane_tail)
+        if m:
+            pane_exit_statuses.append(int(m.group(1)))
 
-    # Quick check: if any pane is dead, classify based on dead_status
-    if dead_panes:
-        dead_statuses = [str(p.get("dead_status", "")).strip() for p in dead_panes
-                         if str(p.get("dead_status", "")).strip()]
+    # Classify based on pane output
+    if pane_exit_statuses:
+        nonzero = [c for c in pane_exit_statuses if c != 0]
+        if nonzero:
+            exit_status = nonzero[0]
+            status = "failed"
+            label = "Failed"
+            detail = f"exit status {exit_status}"
+        elif dead_panes and len(dead_panes) == len(panes):
+            exit_status = 0
+            status = "done"
+            label = "Done"
+            detail = "all panes exited 0"
+        else:
+            exit_status = 0
+            status = "running"
+            label = "Running"
+            detail = "some panes finished, waiting for all"
+
+    # Fallback: dead panes without exit status in output
+    elif dead_panes:
+        dead_statuses = [
+            str(p.get("dead_status", "")).strip()
+            for p in dead_panes if str(p.get("dead_status", "")).strip()
+        ]
         if dead_statuses and all(s == "0" for s in dead_statuses):
             status = "done"
             label = "Done"
@@ -558,22 +572,10 @@ def classify_tmux_session_health_light(
             if dead_statuses:
                 detail += f" ({', '.join(dead_statuses)})"
 
-    # Check if the pane's command is still running by looking at pane_current_command
-    # If command is "bash" or "zsh" but the actual agent script has finished,
-    # the pane is "stuck" - this is a common pattern with our run.sh scripts
-    # that end with `exec "$SHELL" -l`
-    active_commands = [p.get("command", "") for p in panes if not p.get("dead")]
-    stuck_in_shell = all(
-        cmd in ("bash", "zsh", "sh", "-bash", "-zsh", "-sh", "")
-        for cmd in active_commands
-    ) if active_commands else False
-
-    if stuck_in_shell and not dead_panes:
-        # The agent script finished but pane is stuck in shell
-        # Treat as done (agent completed successfully)
-        status = "done"
-        label = "Done"
-        detail = "agent script completed (pane stuck in shell)"
+    # Default: pane is alive with no exit status → Running
+    tail_preview = "\n--- pane ---\n".join(
+        "\n".join(t.splitlines()[-8:]) for t in tails
+    ) if tails else ""
 
     return {
         "status": status,
@@ -581,7 +583,7 @@ def classify_tmux_session_health_light(
         "detail": detail,
         "target": targets[0] if targets else "",
         "exit_status": exit_status,
-        "tail": "",  # Don't include tail in lightweight mode
+        "tail": tail_preview or "",
         "targets": targets,
     }
 

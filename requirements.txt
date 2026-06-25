@@ -1,0 +1,11 @@
+# AutoTester 依赖
+# 安装: pip install -r requirements.txt
+
+# Web 框架
+flask>=2.3.0
+
+# YAML 配置解析
+pyyaml>=6.0
+
+# Markdown 渲染（可选，用于报告格式化）
+markdown>=3.5.0

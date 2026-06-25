@@ -4,6 +4,7 @@ Query routes for AutoTester — sessions, pane capture, reports, results viewer.
 
 from __future__ import annotations
 
+import subprocess
 import sys
 from pathlib import Path
 
@@ -337,13 +338,27 @@ def route_monitor_status():
                 continue
 
         # Kill the stuck sessions (stage done but session still alive)
+        # SAFETY: only kill if session has been running for > 5 minutes.
+        # This prevents accidentally killing a freshly launched session whose
+        # agent is still actively producing output.
+        import time as _time
         killed_count = 0
+        now_ts = _time.time()
+        STUCK_MIN_AGE_SECONDS = 300  # 5 minutes
+
         for sn in sessions_to_kill:
             try:
+                age_result = subprocess.run(
+                    ["tmux", "display-message", "-t", sn, "-p", "#{session_created}"],
+                    capture_output=True, text=True, timeout=5
+                )
+                session_age = now_ts - int(age_result.stdout.strip() or now_ts)
+                if session_age < STUCK_MIN_AGE_SECONDS:
+                    continue
                 if kill_tmux_session(sn):
                     killed_count += 1
             except Exception:
-                pass
+                continue
 
         return jsonify({
             "success": True,
