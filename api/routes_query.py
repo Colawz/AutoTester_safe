@@ -134,11 +134,38 @@ def _security_task_status(task_dir: Path) -> dict:
     }
 
 
+def _merge_health_summaries(*summaries: dict) -> dict[str, int]:
+    merged: dict[str, int] = {"running": 0, "done": 0, "failed": 0, "attention": 0, "dead": 0, "unknown": 0}
+    for summary in summaries:
+        if not isinstance(summary, dict):
+            continue
+        for key, value in summary.items():
+            try:
+                merged[key if key in merged else "unknown"] = merged.get(key if key in merged else "unknown", 0) + int(value or 0)
+            except (TypeError, ValueError):
+                continue
+    return merged
+
+
+def _get_all_sessions_with_health() -> dict:
+    tmux_data = get_tmux_sessions_with_health()
+    sessions = list(tmux_data.get("sessions", []))
+    summary = tmux_data.get("summary", {})
+    try:
+        from core.windows_terminal_manager import list_registered_windows_sessions_with_health
+        windows_data = list_registered_windows_sessions_with_health(verify_database=True)
+        sessions.extend(windows_data.get("sessions", []))
+        summary = _merge_health_summaries(summary, windows_data.get("summary", {}))
+    except Exception:
+        summary = _merge_health_summaries(summary)
+    return {"sessions": sessions, "summary": summary}
+
+
 @query_bp.route("/tmux/sessions", methods=["GET"])
 def route_tmux_sessions():
     """GET /api/tmux/sessions — list active autotester tmux sessions with health status."""
     try:
-        data = get_tmux_sessions_with_health()
+        data = _get_all_sessions_with_health()
         return jsonify({"success": True, **data})
     except Exception as exc:
         return jsonify({"success": False, "error": str(exc)}), 500
@@ -154,6 +181,14 @@ def route_tmux_pane():
         lines = int(request.args.get("lines", "200"))
     except ValueError:
         lines = 200
+
+    try:
+        from core.windows_terminal_manager import capture_windows_terminal_log
+        result = capture_windows_terminal_log(target, line_count=lines)
+        if result.get("success"):
+            return jsonify(result)
+    except Exception:
+        pass
 
     result = capture_tmux_pane(target, line_count=lines)
     return jsonify(result)
@@ -400,10 +435,10 @@ def route_monitor_status():
        - Remove from running_targets
     """
     try:
-        from core.tmux_manager import get_tmux_sessions_with_health, kill_tmux_session
+        from core.tmux_manager import kill_tmux_session
         from core.target_manager import resolve_target_name
 
-        sessions_data = get_tmux_sessions_with_health()
+        sessions_data = _get_all_sessions_with_health()
         sessions = sessions_data.get("sessions", [])
 
         # Build running targets map from session names
@@ -451,7 +486,8 @@ def route_monitor_status():
                                     "tail": health.get("tail", ""),
                                     "targets": health.get("targets", []),
                                 }
-                                sessions_to_kill.append(sn)
+                                if s.get("terminal") != "windows":
+                                    sessions_to_kill.append(sn)
                                 should_remove_running_target = True
                     if should_remove_running_target:
                         del running_targets[(source, target)]

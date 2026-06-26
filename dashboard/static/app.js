@@ -46,10 +46,11 @@ async function refreshActiveSessions(){
     const d=await r.json();
     const sessions=d.sessions||[];
 
-    // Filter out "exited" sessions (stuck shells where DB is done)
+    // Only running/attention sessions should mark target cards as active.
+    // Done/failed/dead remain visible in Monitor but should not look like an active run.
     const activeSessions = sessions.filter(s => {
       const status = s.health?.status || 'running';
-      return status !== 'exited';
+      return status === 'running' || status === 'attention';
     });
 
     // Parse session names to extract source/target

@@ -50,7 +50,16 @@ def route_autotest_status():
 
         # Count active worker sessions
         sessions = list_autotester_tmux_sessions()
+        try:
+            from core.windows_terminal_manager import list_registered_windows_sessions_with_health
+            windows_sessions = list_registered_windows_sessions_with_health().get("sessions", [])
+        except Exception:
+            windows_sessions = []
         worker_count = len([s for s in sessions if "controller" not in s.get("session_name", "")])
+        worker_count += len([
+            s for s in windows_sessions
+            if (s.get("health") or {}).get("status") in {"running", "attention"}
+        ])
 
         return jsonify({
             "running": bool(state.get("cycle_id")),
@@ -134,12 +143,27 @@ def route_autotest_kill_sessions():
     """POST /api/autotest/kill-sessions — kill all worker sessions."""
     sessions = list_autotester_tmux_sessions()
     killed = 0
+    windows_total = 0
     for s in sessions:
         name = s.get("session_name", "")
         if "controller" not in name:
             if kill_tmux_session(name):
                 killed += 1
-    return jsonify({"success": True, "killed": killed, "total_sessions": len(sessions)})
+    try:
+        from core.windows_terminal_manager import (
+            kill_registered_windows_session,
+            list_registered_windows_sessions_with_health,
+        )
+        windows_sessions = list_registered_windows_sessions_with_health().get("sessions", [])
+        windows_total = len(windows_sessions)
+        for s in windows_sessions:
+            name = s.get("session_name", "")
+            health = s.get("health") or {}
+            if health.get("status") in {"running", "attention"} and kill_registered_windows_session(name):
+                killed += 1
+    except Exception:
+        pass
+    return jsonify({"success": True, "killed": killed, "total_sessions": len(sessions) + windows_total})
 
 
 @autotest_bp.route("/autotest/kill-session/<session_name>", methods=["POST"])
@@ -150,6 +174,12 @@ def route_autotest_kill_session(session_name: str):
         return jsonify({"success": False, "error": "Can only kill autotester__ sessions"}), 400
 
     killed = kill_tmux_session(session_name)
+    if not killed:
+        try:
+            from core.windows_terminal_manager import kill_registered_windows_session
+            killed = kill_registered_windows_session(session_name)
+        except Exception:
+            killed = False
     return jsonify({
         "success": killed,
         "session_name": session_name,

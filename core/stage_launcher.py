@@ -163,6 +163,7 @@ def launch_stage(
                 script_path = job_dir / "run.ps1"
                 _write_windows_job_script(
                     script_path=script_path,
+                    log_path=log_path,
                     launch_cwd=launch_cwd,
                     mkdir_paths=mkdir_paths,
                     env_exports=env_exports,
@@ -173,6 +174,7 @@ def launch_stage(
                 result = _open_windows_terminal(
                     window_title=window_title,
                     script_path=script_path,
+                    log_path=log_path,
                     launch_cwd=launch_cwd,
                 )
                 launched_jobs.append(result)
@@ -211,7 +213,7 @@ def launch_stage(
         launch_label = jobs[0]["label"] if len(jobs) == 1 else stage_config.get("label", stage)
 
         if is_windows:
-            return {
+            payload = {
                 "success": True,
                 "message": (
                     f"{adapter.display_name} launched for {target_name} "
@@ -225,6 +227,12 @@ def launch_stage(
                 "run_root": str(run_root),
                 "launched_jobs": launched_jobs,
             }
+            try:
+                from .windows_terminal_manager import register_windows_terminal_session
+                register_windows_terminal_session(payload)
+            except Exception:
+                pass
+            return payload
         else:
             return {
                 "success": True,
@@ -351,9 +359,14 @@ def launch_spec_stage(
 
 # ── Windows helpers ────────────────────────────────────────────────────────
 
+def _ps_literal(value: str) -> str:
+    return "'" + str(value).replace("'", "''") + "'"
+
+
 def _write_windows_job_script(
     *,
     script_path: Path,
+    log_path: Path,
     launch_cwd: Path,
     mkdir_paths: list[Path],
     env_exports: dict[str, str],
@@ -363,49 +376,73 @@ def _write_windows_job_script(
     """Write a PowerShell script for Windows terminal launch."""
     script_path.parent.mkdir(parents=True, exist_ok=True)
 
-    mkdir_lines = "\n".join(
-        f'New-Item -ItemType Directory -Force -Path "{p}" | Out-Null'
-        for p in mkdir_paths
-    )
+    log_path.parent.mkdir(parents=True, exist_ok=True)
 
-    export_lines = "\n".join(
-        f'$env:{key} = "{value}"'
+    mkdir_lines = [
+        f"New-Item -ItemType Directory -Force -Path {_ps_literal(str(p))} | Out-Null"
+        for p in mkdir_paths
+    ]
+
+    export_lines = [
+        f"$env:{key} = {_ps_literal(str(value))}"
         for key, value in env_exports.items()
         if str(value or "").strip()
-    )
+    ]
 
-    script = f"""# AutoTester Job Script
-# Title: {title}
+    lines = [
+        "$ErrorActionPreference = 'Stop'",
+        f"$__autotester_log = {_ps_literal(str(log_path))}",
+        "New-Item -ItemType Directory -Force -Path (Split-Path -Parent $__autotester_log) | Out-Null",
+        "function Write-AutoTesterLog { param([string]$Message) $Message | Tee-Object -FilePath $__autotester_log -Append }",
+        f"$Host.UI.RawUI.WindowTitle = {_ps_literal(title)}",
+        "Write-AutoTesterLog '========================================'",
+        f"Write-AutoTesterLog {_ps_literal('  AutoTester - ' + title)}",
+        "Write-AutoTesterLog '========================================'",
+        *mkdir_lines,
+        f"Set-Location -LiteralPath {_ps_literal(str(launch_cwd))}",
+        *export_lines,
+        "Write-AutoTesterLog ('Started at: ' + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss zzz'))",
+        "Write-AutoTesterLog ('Working directory: ' + (Get-Location).Path)",
+        "Write-AutoTesterLog 'Running command:'",
+        f"Write-AutoTesterLog {_ps_literal(runner_command)}",
+        "Write-AutoTesterLog '========================================'",
+        "$__autotester_exit = 0",
+        "$__autotester_temp_log = Join-Path $env:TEMP ('autotester-output-' + (Get-Date -Format 'yyyyMMddHHmmss') + '.log')",
+        "try {",
+        "    $__autotester_previous_eap = $ErrorActionPreference",
+        "    $ErrorActionPreference = 'Continue'",
+        f"    & {{ {runner_command} }} 2>&1 | Tee-Object -FilePath $__autotester_log -Append | Tee-Object -FilePath $__autotester_temp_log",
+        "    $ErrorActionPreference = $__autotester_previous_eap",
+        "    $__autotester_exit = if ($LASTEXITCODE -ne $null) { [int]$LASTEXITCODE } else { 0 }",
+        "} catch {",
+        "    if ($__autotester_previous_eap) { $ErrorActionPreference = $__autotester_previous_eap }",
+        "    $__autotester_exit = 1",
+        "    ($_ | Out-String) | Tee-Object -FilePath $__autotester_log -Append",
+        "}",
+        "if (Test-Path $__autotester_temp_log) {",
+        "    if (Select-String -Path $__autotester_temp_log -Pattern '(Error|ERROR|Fatal|FATAL):\\s*(Insufficient Balance|Authentication failed|Unauthorized|Permission denied|Rate limit|API key|database or disk is full)' -Quiet) {",
+        "        Write-AutoTesterLog '[autotester] fatal runner output detected; overriding exit status to 1'",
+        "        $__autotester_exit = 1",
+        "    }",
+        "    Remove-Item $__autotester_temp_log -ErrorAction SilentlyContinue",
+        "}",
+        "Write-AutoTesterLog '========================================'",
+        "Write-AutoTesterLog ('Finished at: ' + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss zzz'))",
+        "Write-AutoTesterLog ('Exit status: ' + $__autotester_exit)",
+        "Write-AutoTesterLog ''",
+        "Write-AutoTesterLog 'AutoTester runner command finished. Press Enter to close this window.'",
+        "Read-Host | Out-Null",
+        "",
+    ]
 
-Write-Host "========================================"
-Write-Host "  AutoTester - {title}"
-Write-Host "========================================"
-Write-Host "Started at: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss zzz')"
-
-{mkdir_lines}
-
-Set-Location "{launch_cwd}"
-{export_lines}
-
-Write-Host "Working directory: $(Get-Location)"
-Write-Host "========================================"
-
-{runner_command}
-
-Write-Host "========================================"
-Write-Host "Finished at: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss zzz')"
-Write-Host "Exit status: $LASTEXITCODE"
-Write-Host "Press any key to close this window..."
-$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-"""
-
-    script_path.write_text(script, encoding="utf-8")
+    script_path.write_text("\n".join(lines), encoding="utf-8")
 
 
 def _open_windows_terminal(
     *,
     window_title: str,
     script_path: Path,
+    log_path: Path,
     launch_cwd: Path,
 ) -> dict[str, Any]:
     """Open a new PowerShell window on Windows."""
@@ -441,5 +478,6 @@ def _open_windows_terminal(
         "title": window_title,
         "pid": process.pid,
         "script_path": str(script_path),
+        "log_path": str(log_path),
         "terminal": "powershell",
     }
