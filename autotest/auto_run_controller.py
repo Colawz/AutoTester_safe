@@ -24,6 +24,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from core.scanner import check_database
+from core.session_kill_policy import session_kill_enabled
 from core.tmux_manager import (
     build_tmux_session_name,
     list_autotester_tmux_sessions,
@@ -125,6 +126,10 @@ def launch_stage(target_name: str, stage: str) -> str | None:
 
 def kill_target_sessions(target_name: str) -> int:
     """Kill all active sessions for a target."""
+    if not session_kill_enabled():
+        log("session kill is disabled; preserving target sessions")
+        return 0
+
     sessions = list_autotester_tmux_sessions()
     source, target = target_name.split("/", 1) if "/" in target_name else ("", target_name)
 

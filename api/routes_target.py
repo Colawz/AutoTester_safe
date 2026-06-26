@@ -23,7 +23,7 @@ def create_target_route():
     """POST /api/targets — create a new target with requirement.md + optional source zip."""
     body = request.get_json(silent=True) or {}
 
-    name = str(body.get("name", "")).strip()
+    name = str(body.get("name", "")).replace("\\", "/").strip()
     description = str(body.get("description", "")).strip()
 
     if not name:

@@ -128,6 +128,7 @@ def delete_exec_track_data(
 
     targets = [
         exec_leaf / TRACK_DIR_NAMES[track],
+        exec_leaf / "results" / TRACK_DIR_NAMES[track],
         specs_target_root(db, source, target),
     ]
 

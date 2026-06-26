@@ -18,9 +18,13 @@ from pathlib import Path
 from .config import get_database_root, get_targets_root
 
 
+def _normalize_target_name(name: str) -> str:
+    return str(name or "").replace("\\", "/").strip("/")
+
+
 def _parse_target_name(name: str) -> tuple[str, str]:
     """Parse 'source/target_name' into (source, target_name)."""
-    parts = [p for p in str(name).strip("/").split("/") if p]
+    parts = [p for p in _normalize_target_name(name).split("/") if p]
     if len(parts) < 2:
         raise ValueError(
             f"Target name must be in 'source/target' format, got: {name!r}"

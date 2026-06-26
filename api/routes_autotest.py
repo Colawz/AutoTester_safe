@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from flask import Blueprint, jsonify, request
 
+from core.session_kill_policy import session_kill_enabled
 from core.tmux_manager import kill_tmux_session, list_autotester_tmux_sessions
 from core.shell_detect import detect_shell
 
@@ -131,6 +132,13 @@ def route_autotest_start():
 @autotest_bp.route("/autotest/stop", methods=["POST"])
 def route_autotest_stop():
     """POST /api/autotest/stop — stop the controller."""
+    if not session_kill_enabled():
+        return jsonify({
+            "success": True,
+            "killed": 0,
+            "message": "Session kill is disabled by default",
+            "session_kill_enabled": False,
+        })
     killed = kill_tmux_session("autotester__auto__controller")
     return jsonify({
         "success": killed,
@@ -141,6 +149,14 @@ def route_autotest_stop():
 @autotest_bp.route("/autotest/kill-sessions", methods=["POST"])
 def route_autotest_kill_sessions():
     """POST /api/autotest/kill-sessions — kill all worker sessions."""
+    if not session_kill_enabled():
+        return jsonify({
+            "success": True,
+            "killed": 0,
+            "total_sessions": 0,
+            "message": "Session kill is disabled by default",
+            "session_kill_enabled": False,
+        })
     sessions = list_autotester_tmux_sessions()
     killed = 0
     windows_total = 0
@@ -172,6 +188,14 @@ def route_autotest_kill_session(session_name: str):
     # Security: only allow killing autotester__ sessions
     if not session_name.startswith("autotester__"):
         return jsonify({"success": False, "error": "Can only kill autotester__ sessions"}), 400
+    if not session_kill_enabled():
+        return jsonify({
+            "success": True,
+            "killed": 0,
+            "session_name": session_name,
+            "message": "Session kill is disabled by default",
+            "session_kill_enabled": False,
+        })
 
     killed = kill_tmux_session(session_name)
     if not killed:
@@ -238,6 +262,16 @@ def route_autotest_auto_run():
         from core.tmux_manager import list_autotester_tmux_sessions
         for s in list_autotester_tmux_sessions():
             if s.get("session_name", "") == session_name:
+                if not session_kill_enabled():
+                    return jsonify({
+                        "success": False,
+                        "error": (
+                            "An Auto-Run controller session already exists and "
+                            "session kill is disabled by default"
+                        ),
+                        "session": session_name,
+                        "session_kill_enabled": False,
+                    }), 409
                 kill_tmux_session(s["session_name"])
 
         # Launch controller in tmux
@@ -290,6 +324,14 @@ def route_autotest_auto_run_stop():
     try:
         from core.tmux_manager import list_autotester_tmux_sessions
         from autotest.auto_run_controller import STATE_PATH
+
+        if not session_kill_enabled():
+            return jsonify({
+                "success": True,
+                "killed": 0,
+                "message": "Session kill is disabled by default",
+                "session_kill_enabled": False,
+            })
 
         killed = 0
         sessions = list_autotester_tmux_sessions()

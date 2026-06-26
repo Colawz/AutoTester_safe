@@ -16,6 +16,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from .session_kill_policy import session_kill_enabled
 from .shell_detect import ShellInfo, detect_shell, shell_quote
 
 
@@ -258,6 +259,8 @@ def open_tmux_window(
 
 def kill_tmux_session(session_name: str) -> bool:
     """Kill a tmux session. Returns True if successful."""
+    if not session_kill_enabled():
+        return False
     if not tmux_exists():
         return False
     try:

@@ -19,6 +19,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from .session_kill_policy import session_kill_enabled
+
 # Windows keep-awake constants
 _ES_CONTINUOUS = 0x80000000
 _ES_SYSTEM_REQUIRED = 0x00000001
@@ -94,6 +96,8 @@ def _windows_pid_running(pid: Any) -> bool:
 
 
 def _kill_windows_pid(pid: Any) -> bool:
+    if not session_kill_enabled():
+        return False
     pid_text = str(pid or "").strip()
     if not pid_text.isdigit():
         return False
@@ -405,6 +409,8 @@ def list_windows_terminal_tabs() -> list[dict[str, Any]]:
 
 def kill_windows_terminal_tab(process_id: int) -> bool:
     """Kill a Windows Terminal tab by process ID."""
+    if not session_kill_enabled():
+        return False
     try:
         subprocess.run(
             ["taskkill", "/PID", str(process_id), "/F"],
@@ -637,6 +643,8 @@ def capture_windows_terminal_log(session_name: str, *, line_count: int = 200) ->
 
 
 def kill_registered_windows_session(session_name: str) -> bool:
+    if not session_kill_enabled():
+        return False
     rows = _read_json(_registry_path())
     if not isinstance(rows, list):
         return False

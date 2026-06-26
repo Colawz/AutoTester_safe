@@ -431,15 +431,17 @@ def route_monitor_status():
     2. For each session, check both tmux state AND database state
     3. If database shows stage is done and tmux exited cleanly:
        - Mark as "done"
-       - Auto-kill the completed tmux session after a short grace period
+       - Optionally auto-kill the completed tmux session after a short grace period
        - Remove from running_targets
     """
     try:
         from core.tmux_manager import kill_tmux_session
+        from core.session_kill_policy import session_kill_enabled
         from core.target_manager import resolve_target_name
 
         sessions_data = _get_all_sessions_with_health()
         sessions = sessions_data.get("sessions", [])
+        kill_enabled = session_kill_enabled()
 
         # Build running targets map from session names
         # Format: autotester__{ts}__{harness}__{stage}__{source}__{target}
@@ -486,7 +488,7 @@ def route_monitor_status():
                                     "tail": health.get("tail", ""),
                                     "targets": health.get("targets", []),
                                 }
-                                if s.get("terminal") != "windows":
+                                if kill_enabled and s.get("terminal") != "windows":
                                     sessions_to_kill.append(sn)
                                 should_remove_running_target = True
                     if should_remove_running_target:
@@ -503,19 +505,20 @@ def route_monitor_status():
         now_ts = _time.time()
         STUCK_MIN_AGE_SECONDS = 300  # 5 minutes
 
-        for sn in sessions_to_kill:
-            try:
-                age_result = subprocess.run(
-                    ["tmux", "display-message", "-t", sn, "-p", "#{session_created}"],
-                    capture_output=True, text=True, timeout=5
-                )
-                session_age = now_ts - int(age_result.stdout.strip() or now_ts)
-                if session_age < STUCK_MIN_AGE_SECONDS:
+        if kill_enabled:
+            for sn in sessions_to_kill:
+                try:
+                    age_result = subprocess.run(
+                        ["tmux", "display-message", "-t", sn, "-p", "#{session_created}"],
+                        capture_output=True, text=True, timeout=5
+                    )
+                    session_age = now_ts - int(age_result.stdout.strip() or now_ts)
+                    if session_age < STUCK_MIN_AGE_SECONDS:
+                        continue
+                    if kill_tmux_session(sn):
+                        killed_count += 1
+                except Exception:
                     continue
-                if kill_tmux_session(sn):
-                    killed_count += 1
-            except Exception:
-                continue
 
         return jsonify({
             "success": True,
@@ -526,6 +529,7 @@ def route_monitor_status():
             ],
             "summary": sessions_data.get("summary", {}),
             "killed_stuck_sessions": killed_count,
+            "session_kill_enabled": kill_enabled,
         })
     except Exception as exc:
         return jsonify({"success": False, "error": str(exc)}), 500

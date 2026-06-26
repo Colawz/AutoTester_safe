@@ -29,6 +29,7 @@ from core.stage_launcher import (
     launch_exec_track_stage,
     launch_spec_stage,
 )
+from core.session_kill_policy import session_kill_enabled
 from core.tmux_manager import (
     tmux_session_exists,
     kill_tmux_session,
@@ -112,6 +113,10 @@ def run_tmux(args: list[str], *, timeout: int = 20) -> subprocess.CompletedProce
 # ── Session management ──────────────────────────────────────────────────────
 
 def kill_previous_sessions() -> int:
+    if not session_kill_enabled():
+        log("session kill is disabled; preserving previous sessions")
+        return 0
+
     state = read_json_file(STATE_PATH)
     sessions = [str(item.get("session") or "").strip()
                 for item in state.get("sessions", []) if isinstance(item, dict)]
@@ -356,7 +361,7 @@ def run_single_pass(
                 session_name = str(item.get("session") or "")
                 log(f"completed {item['target_name']} session={session_name}")
                 append_history("target_completed", cycle_id=cycle_id, **item)
-                if session_name:
+                if session_name and session_kill_enabled():
                     kill_tmux_session(session_name)
 
                 # Replace with next candidate

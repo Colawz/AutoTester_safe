@@ -1,6 +1,16 @@
 // AutoTester Dashboard
 let harness='opencode',execMode='single',targets=[],atTimer=null,statusFilter='',sourceFilter='';
 window.activeSessions = [];
+const MAX_TARGET_ZIP_BYTES = 37 * 1024 * 1024;
+
+async function readApiResponse(response){
+  const text = await response.text();
+  try{
+    return text ? JSON.parse(text) : {};
+  }catch(e){
+    return {success:false,error:text || `HTTP ${response.status}`};
+  }
+}
 
 document.addEventListener('DOMContentLoaded',()=>{
   renderHarnessBtns();refreshTargets();refreshAutotestStatus();refreshActiveSessions();
@@ -371,8 +381,19 @@ async function submitTarget(e){
   e.preventDefault();
   const body={name:document.getElementById('targetName').value.trim(),description:document.getElementById('targetDesc').value.trim()};
   const file=document.getElementById('targetZip').files?.[0];
-  if(file){const buf=await file.arrayBuffer();const bytes=new Uint8Array(buf);let bin='';for(let i=0;i<bytes.length;i++)bin+=String.fromCharCode(bytes[i]);body.source_zip=btoa(bin);}
-  try{const r=await fetch('/api/targets',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(d.success){toast('Created: '+d.name,'ok');closeAddModal();refreshTargets();}else toast(d.error||'Failed','err');}catch(e){toast('Error: '+e.message,'err');}
+  if(file){
+    if(file.size > MAX_TARGET_ZIP_BYTES){
+      toast('Zip 文件过大，请控制在 37MB 以内','err');
+      return;
+    }
+    const buf=await file.arrayBuffer();const bytes=new Uint8Array(buf);let bin='';for(let i=0;i<bytes.length;i++)bin+=String.fromCharCode(bytes[i]);body.source_zip=btoa(bin);
+  }
+  try{
+    const r=await fetch('/api/targets',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await readApiResponse(r);
+    if(r.ok&&d.success){toast('Created: '+d.name,'ok');closeAddModal();refreshTargets();}
+    else toast(`创建失败 HTTP ${r.status}: ${d.error||d.message||'Failed'}`,'err');
+  }catch(e){toast('Error: '+e.message,'err');}
 }
 
 // ── Tmux Monitor ──────────────────────────────────────────────────────────

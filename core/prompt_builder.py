@@ -143,6 +143,29 @@ def _write_stage_model_markers(
 
 # ── Runtime alias ────────────────────────────────────────────────────────────
 
+def _remove_path_if_exists(path: Path) -> None:
+    if path.is_symlink() or path.exists():
+        if path.is_dir() and not path.is_symlink():
+            shutil.rmtree(path)
+        else:
+            path.unlink()
+
+
+def _prepare_exec_copy_workspace(*, sample_leaf: Path, exec_leaf: Path) -> Path:
+    """
+    Windows fallback for environments where directory symlinks are unavailable.
+
+    The working directory is the canonical exec leaf so generated
+    `results/{track}/...` artifacts stay visible to the report scanner.
+    """
+    exec_leaf.mkdir(parents=True, exist_ok=True)
+    sample_copy = exec_leaf / "sample"
+    _remove_path_if_exists(sample_copy)
+    shutil.copytree(sample_leaf, sample_copy)
+    (exec_leaf / "results").mkdir(parents=True, exist_ok=True)
+    return exec_leaf
+
+
 def _prepare_exec_runtime_alias(
     *,
     sample_leaf: Path,
@@ -171,14 +194,15 @@ def _prepare_exec_runtime_alias(
     results_alias = runtime_dir / "results"
 
     for alias_path in (sample_alias, results_alias):
-        if alias_path.is_symlink() or alias_path.exists():
-            if alias_path.is_dir() and not alias_path.is_symlink():
-                shutil.rmtree(alias_path)
-            else:
-                alias_path.unlink()
+        _remove_path_if_exists(alias_path)
 
-    sample_alias.symlink_to(sample_leaf)
-    results_alias.symlink_to(exec_leaf)
+    try:
+        sample_alias.symlink_to(sample_leaf, target_is_directory=True)
+        results_alias.symlink_to(exec_leaf, target_is_directory=True)
+    except OSError:
+        shutil.rmtree(runtime_dir, ignore_errors=True)
+        return _prepare_exec_copy_workspace(sample_leaf=sample_leaf, exec_leaf=exec_leaf)
+
     return runtime_dir
 
 
