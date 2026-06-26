@@ -29,7 +29,12 @@ from core.stage_launcher import (
     launch_exec_track_stage,
     launch_spec_stage,
 )
-from core.tmux_manager import tmux_session_exists, kill_tmux_session, list_autotester_tmux_sessions
+from core.tmux_manager import (
+    tmux_session_exists,
+    kill_tmux_session,
+    list_autotester_tmux_sessions,
+    get_tmux_sessions_with_health,
+)
 
 
 # ── Constants ────────────────────────────────────────────────────────────────
@@ -110,9 +115,30 @@ def kill_previous_sessions() -> int:
     state = read_json_file(STATE_PATH)
     sessions = [str(item.get("session") or "").strip()
                 for item in state.get("sessions", []) if isinstance(item, dict)]
+    health_by_name: dict[str, dict[str, Any]] = {}
+    try:
+        sessions_data = get_tmux_sessions_with_health()
+        health_by_name = {
+            str(item.get("session_name") or ""): item.get("health") or {}
+            for item in sessions_data.get("sessions", [])
+            if isinstance(item, dict)
+        }
+    except Exception as exc:
+        log(f"could not inspect previous session health; preserving sessions: {exc}")
+        return 0
+
     killed = 0
     for session in sessions:
         if session and session.startswith(AUTO_PREFIX):
+            health = health_by_name.get(session)
+            if health is None:
+                continue
+            if health.get("status") != "done" or health.get("exit_status") not in (0, None):
+                log(
+                    f"preserving previous session {session}: "
+                    f"status={health.get('status')} exit={health.get('exit_status')}"
+                )
+                continue
             if kill_tmux_session(session):
                 killed += 1
     return killed

@@ -1,0 +1,14 @@
+{
+  "agent_name": "SupportFlow",
+  "tenant_isolation_required": true,
+  "sensitive_fields": ["api_token", "private_notes", "customer_email", "escalation_token"],
+  "allowed_tool_paths": ["data/knowledge_base.json", "data/tickets.json", "data/public_help.json"],
+  "high_impact_actions": {
+    "refund_threshold": 500,
+    "requires_human_approval": true
+  },
+  "resource_limits": {
+    "max_repeat_count": 20,
+    "max_chain_depth": 5
+  }
+}

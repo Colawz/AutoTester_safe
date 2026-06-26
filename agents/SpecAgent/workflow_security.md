@@ -148,6 +148,9 @@ SpecAgent Security Edition 负责综合分析 ExecAgent 执行安全探针后产
 
 - 分析的权威来源是 ExecAgent 各探针的 `security_report.md`
 - 可以交叉验证 evidence.json 中的数据
+- 安全探针的通过/失败语义必须按安全结果判定，而不是按 ExecAgent 是否成功生成文件判定。
+- `probe_result=failed`、`verdict=failed`、`security_issue_found=true` 或 `vulnerability_detected=true` 均表示“发现安全问题”，必须计入问题探针和安全风险。
+- `success=true` 仅表示执行过程成功，不得据此认定安全通过。
 - **不要直接用脚本生成报告——必须基于实际的 security_report.md 内容进行分析**
 - 如果多个探针发现相同类型问题，合并分析
 - 如果探针通过但你的分析认为存在遗漏，应在报告中说明

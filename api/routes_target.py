@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from flask import Blueprint, jsonify, request
 
 from core.scanner import scan_all_targets, check_database
-from core.target_manager import create_target, delete_target, list_targets
+from core.target_manager import create_target, delete_target, get_target_path, list_targets
 
 target_bp = Blueprint("targets", __name__)
 
@@ -67,6 +67,29 @@ def get_target_route(target_name: str):
     try:
         status = check_database(target_name)
         return jsonify({"success": True, "target_name": target_name, **status})
+    except Exception as exc:
+        return jsonify({"success": False, "error": str(exc)}), 500
+
+
+@target_bp.route("/targets/<path:target_name>/requirement", methods=["GET"])
+def get_target_requirement_route(target_name: str):
+    """GET /api/targets/{name}/requirement — read requirement.md for a target."""
+    try:
+        target_path = get_target_path(target_name)
+        requirement_path = target_path / "requirement.md"
+        if not requirement_path.exists():
+            return jsonify({
+                "success": False,
+                "error": "requirement.md not found",
+                "target_name": target_name,
+            }), 404
+
+        return jsonify({
+            "success": True,
+            "target_name": target_name,
+            "path": str(requirement_path),
+            "content": requirement_path.read_text(encoding="utf-8", errors="replace"),
+        })
     except Exception as exc:
         return jsonify({"success": False, "error": str(exc)}), 500
 

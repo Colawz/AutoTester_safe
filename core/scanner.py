@@ -197,11 +197,20 @@ def _bundle_stage_summary(root: Path, expected_count: int | None = None) -> dict
     for bundle_dir in bundles:
         issues: list[str] = []
         warnings: list[str] = []
+        is_security_bundle = (
+            (
+                (bundle_dir / "security_report.md").exists()
+                or (bundle_dir / "results" / "security_report.md").exists()
+            )
+            and (bundle_dir / "results" / "evidence.json").exists()
+            and (bundle_dir / "results" / "probe_output.json").exists()
+        )
 
         # Core files
-        for name in EXEC_BUNDLE_CORE_FILES:
-            if not (bundle_dir / name).exists():
-                issues.append(name)
+        if not is_security_bundle:
+            for name in EXEC_BUNDLE_CORE_FILES:
+                if not (bundle_dir / name).exists():
+                    issues.append(name)
 
         # Results directory
         results_dir = bundle_dir / "results"
@@ -217,7 +226,9 @@ def _bundle_stage_summary(root: Path, expected_count: int | None = None) -> dict
         metrics_payload, metrics_lenient = _read_json_lenient(metrics_path)
         has_task_time = _task_metrics_has_time(metrics_payload)
 
-        if not metrics_path.exists():
+        if is_security_bundle:
+            pass
+        elif not metrics_path.exists():
             issues.append("task_metrics.json")
         elif not isinstance(metrics_payload, dict):
             warnings.append("task_metrics.json (invalid JSON)")
@@ -231,7 +242,9 @@ def _bundle_stage_summary(root: Path, expected_count: int | None = None) -> dict
 
         # Start timestamp
         start_ts = bundle_dir / "start_timestamp.json"
-        if start_ts.exists():
+        if is_security_bundle:
+            pass
+        elif start_ts.exists():
             if not _is_canonical_exec_timestamp_file(start_ts):
                 warnings.append("start_timestamp.json (non-canonical)")
         elif not has_task_time:
@@ -239,14 +252,16 @@ def _bundle_stage_summary(root: Path, expected_count: int | None = None) -> dict
 
         # End timestamp
         end_ts = bundle_dir / "end_timestamp.json"
-        if end_ts.exists():
+        if is_security_bundle:
+            pass
+        elif end_ts.exists():
             if not _is_canonical_exec_timestamp_file(end_ts):
                 warnings.append("end_timestamp.json (non-canonical)")
         elif not has_task_time:
             warnings.append("end_timestamp.json or task_metrics time")
 
         # Worklog
-        if not _has_any_worklog(bundle_dir):
+        if not is_security_bundle and not _has_any_worklog(bundle_dir):
             warnings.append("worklog")
 
         if issues:
@@ -266,6 +281,15 @@ def _bundle_stage_summary(root: Path, expected_count: int | None = None) -> dict
         "count_ok": len(bundles) >= ne if ne is not None else len(bundles) > 0,
         "has_bundles": len(bundles) > 0,
         "valid_bundle_count": valid_bundle_count,
+        "security_bundle_count": sum(
+            1 for b in bundles
+            if (
+                (b / "security_report.md").exists()
+                or (b / "results" / "security_report.md").exists()
+            )
+            and (b / "results" / "evidence.json").exists()
+            and (b / "results" / "probe_output.json").exists()
+        ),
         "warning_bundles": warning_bundles,
         "invalid_bundles": invalid_bundles,
     }
@@ -297,7 +321,7 @@ def _exec_track_state(
 ) -> dict[str, Any]:
     """Determine the state of a single exec track (baseline or with_target)."""
     has_any = root.exists() and any(root.iterdir())
-    completed = (
+    standard_completed = (
         root.exists()
         and metrics_exists
         and stage_start_exists
@@ -305,6 +329,14 @@ def _exec_track_state(
         and bool(summary.get("has_bundles"))
         and not bool(summary.get("invalid_bundles"))
     )
+    security_completed = (
+        root.exists()
+        and tasks_dir_exists
+        and bool(summary.get("security_bundle_count"))
+        and summary.get("security_bundle_count") == summary.get("bundle_count")
+        and not bool(summary.get("invalid_bundles"))
+    )
+    completed = standard_completed or security_completed
 
     if completed:
         state = "done"
@@ -317,9 +349,9 @@ def _exec_track_state(
         state_label = "Partial"
 
     missing_parts: list[str] = []
-    if not metrics_exists:
+    if not metrics_exists and not security_completed:
         missing_parts.append("metrics.json")
-    if not stage_start_exists:
+    if not stage_start_exists and not security_completed:
         missing_parts.append("stage_start_timestamp.json")
     if not tasks_dir_exists:
         missing_parts.append("tasks/")
@@ -335,6 +367,7 @@ def _exec_track_state(
         "state_label": state_label,
         "bundle_count": summary.get("bundle_count", 0),
         "valid_bundle_count": summary.get("valid_bundle_count", 0),
+        "security_bundle_count": summary.get("security_bundle_count", 0),
         "warning_bundle_count": len(summary.get("warning_bundles", {})),
         "invalid_bundle_count": len(summary.get("invalid_bundles", {})),
         "count_ok": bool(summary.get("count_ok")),

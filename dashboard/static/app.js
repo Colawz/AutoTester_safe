@@ -144,6 +144,7 @@ function renderCards(){
   const grid=document.getElementById('cards');
   if(!targets.length){grid.innerHTML='<div style="color:#64748b;text-align:center;padding:48px;font-size:1.05rem">还没有测试目标。点击「+ 添加新测试」创建。</div>';return;}
   grid.innerHTML=targets.map(renderCard).join('');
+  bindTargetCardClicks();
   applyFilters();
 }
 
@@ -164,7 +165,8 @@ function renderCard(t){
 
   // Check if there's an active session for this target
   const activeSession = window.activeSessions?.find(s =>
-    s.source === t.source && s.target === t.target
+    String(s.source||'').toLowerCase() === String(t.source||'').toLowerCase()
+    && String(s.target||'').toLowerCase() === String(t.target||'').toLowerCase()
   );
   const isRunning = !!activeSession;
 
@@ -191,7 +193,7 @@ function renderCard(t){
     autoRunBtn = `<button class="btn btn-exec-track auto-run-btn" onclick="autoRun('${nm}')" title="Will auto-run all remaining stages (${nextStage} → ...)">🚀 Auto-Run (${nextStage})</button>`;
   }
 
-  return `<div class="card" data-status="${st}" data-source="${t.source||''}">
+  return `<div class="card target-card-clickable" data-status="${st}" data-source="${esc(t.source||'')}" data-target-name="${esc(t.name)}" role="button" tabindex="0">
     <div class="card-content">
       <div class="card-header">
         <h3><span class="card-source">${esc(t.source||'')}/</span>${esc(t.target||t.name)}</h3>
@@ -201,18 +203,33 @@ function renderCard(t){
       ${execDetail?`<div style="font-size:.78rem;color:#92400e;margin-bottom:8px">⚠ ${esc(execDetail)}</div>`:''}
       <div class="card-meta">
         ${metaChip('S',sampleL)}${metaChip('E',execL)}${metaChip('P',specL)}
-        ${execDone||specDone?`<a href="/results/${encodeURIComponent(t.name)}" class="results-link" target="_blank">📋 Results</a>`:`<a href="/results/${encodeURIComponent(t.name)}" class="results-link results-link-dim" target="_blank">📋 Results</a>`}
+        ${execDone||specDone?`<a href="/results/${encodeURIComponent(t.name)}" class="results-link" target="_blank" onclick="event.stopPropagation()">📋 Results</a>`:`<a href="/results/${encodeURIComponent(t.name)}" class="results-link results-link-dim" target="_blank" onclick="event.stopPropagation()">📋 Results</a>`}
       </div>
-      <div class="card-actions">
+      <div class="card-actions" onclick="event.stopPropagation()">
         <button class="btn btn-sample" ${sampleDisabled} onclick="${sampleDone?'':`launch('sample','${nm}')`}" title="${sampleDone?'Sample已完成':'运行Sample阶段'}">Sample</button>
         <button class="btn btn-exec" ${execDisabled} onclick="${execDone?'':`launchExec('${nm}')`}" title="${execDone?'Exec已完成':'运行Exec阶段'}">Exec</button>
         <button class="btn btn-spec" ${specDisabled} onclick="${specDone?'':`launch('spec','${nm}')`}" title="${specDone?'Spec已完成':'运行Spec阶段'}">Spec</button>
       </div>
-      <div class="card-actions-secondary">
+      <div class="card-actions-secondary" onclick="event.stopPropagation()">
         ${autoRunBtn}
       </div>
     </div>
   </div>`;
+}
+
+function bindTargetCardClicks(){
+  document.querySelectorAll('.target-card-clickable').forEach(card=>{
+    card.addEventListener('click',event=>{
+      if(event.target.closest('button,a,input,select,textarea,label'))return;
+      openRequirement(card.dataset.targetName||'');
+    },true);
+    card.addEventListener('keydown',event=>{
+      if(event.key!=='Enter'&&event.key!==' ')return;
+      if(event.target.closest('button,a,input,select,textarea,label'))return;
+      event.preventDefault();
+      openRequirement(card.dataset.targetName||'');
+    });
+  });
 }
 
 // Auto-Run function - launches a controller that runs all stages automatically
@@ -289,6 +306,51 @@ function goToMonitor(){
 
 function esc(s){if(!s)return'';const d=document.createElement('span');d.textContent=s;return d.innerHTML;}
 function escAttr(s){return (s||'').replace(/\\/g,'\\\\').replace(/'/g,'\\\'');}
+
+function parseMarkdown(text){
+  if(!text)return'';
+  return esc(text)
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^## (.+)$/gm,'<h2>$1</h2>')
+    .replace(/^# (.+)$/gm,'<h1>$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/```(\w+)?\n([\s\S]+?)```/g,'<pre><code>$2</code></pre>')
+    .replace(/`(.+?)`/g,'<code>$1</code>')
+    .replace(/^- (.+)$/gm,'<li>$1</li>')
+    .replace(/(<li>.*<\/li>)/s,'<ul>$1</ul>')
+    .replace(/\n\n/g,'</p><p>')
+    .replace(/\n/g,'<br>');
+}
+
+async function openRequirement(name){
+  const dlg=document.getElementById('requirementModal');
+  const title=document.getElementById('requirementTitle');
+  const pathEl=document.getElementById('requirementPath');
+  const body=document.getElementById('requirementBody');
+  if(!dlg||!title||!body)return;
+
+  title.textContent=name;
+  if(pathEl)pathEl.textContent='';
+  body.innerHTML='<div class="loading">Loading requirement.md...</div>';
+  dlg.showModal();
+
+  try{
+    const r=await fetch(`/api/targets/${encodeURIComponent(name)}/requirement`);
+    const d=await r.json();
+    if(!d.success){
+      body.innerHTML=`<div class="requirement-error">${esc(d.error||'Failed to load requirement.md')}</div>`;
+      return;
+    }
+    if(pathEl)pathEl.textContent=d.path||'';
+    body.innerHTML=parseMarkdown(d.content||'');
+  }catch(e){
+    body.innerHTML=`<div class="requirement-error">Error: ${esc(e.message)}</div>`;
+  }
+}
+
+function closeRequirementModal(){
+  document.getElementById('requirementModal')?.close();
+}
 
 // ── Launch ────────────────────────────────────────────────────────────────
 async function launch(stage,name){

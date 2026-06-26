@@ -13,6 +13,7 @@ from flask import Blueprint, jsonify, request
 
 from core.cleaner import delete_target_stage_data, delete_exec_track_data
 from core.config import get_default_harness
+from core.target_manager import resolve_target_name
 from core.stage_launcher import (
     launch_sample_stage,
     launch_exec_stage,
@@ -32,6 +33,7 @@ def _get_harness() -> str:
 @stage_bp.route("/stage/sample/<path:target_name>", methods=["POST"])
 def route_sample(target_name: str):
     try:
+        target_name = resolve_target_name(target_name)
         return jsonify(launch_sample_stage(target_name, _get_harness()))
     except ValueError as exc:
         return jsonify({"success": False, "error": str(exc)}), 400
@@ -42,6 +44,7 @@ def route_sample(target_name: str):
 @stage_bp.route("/stage/exec/<path:target_name>", methods=["POST"])
 def route_exec(target_name: str):
     try:
+        target_name = resolve_target_name(target_name)
         track = request.args.get("track", "").strip().lower()
         mode = request.args.get("mode", "single").strip().lower()
         if track == "baseline":
@@ -59,6 +62,7 @@ def route_exec(target_name: str):
 @stage_bp.route("/stage/spec/<path:target_name>", methods=["POST"])
 def route_spec(target_name: str):
     try:
+        target_name = resolve_target_name(target_name)
         return jsonify(launch_spec_stage(target_name, _get_harness()))
     except ValueError as exc:
         return jsonify({"success": False, "error": str(exc)}), 400
@@ -92,8 +96,9 @@ def route_batch():
         failed = []
         for name in names:
             try:
-                result = launch_fn(str(name), harness)
-                launched.append({"target_name": name, "message": result.get("message", "")})
+                canonical_name = resolve_target_name(str(name))
+                result = launch_fn(canonical_name, harness)
+                launched.append({"target_name": canonical_name, "message": result.get("message", "")})
             except Exception as exc:
                 failed.append({"target_name": name, "error": str(exc)})
 
@@ -116,6 +121,7 @@ def route_batch():
 @stage_bp.route("/stage/<stage>/<path:target_name>", methods=["DELETE"])
 def route_cleanup(stage: str, target_name: str):
     try:
+        target_name = resolve_target_name(target_name)
         harness = _get_harness()
         track = request.args.get("track", "").strip().lower()
 

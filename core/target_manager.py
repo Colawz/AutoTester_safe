@@ -43,6 +43,20 @@ def get_target_path(target_name: str) -> Path:
     return get_targets_root() / _safe_name(source) / _safe_name(target)
 
 
+def resolve_target_name(target_name: str) -> str:
+    """Return the canonical target name from TargetsRepo, matching case-insensitively."""
+    requested = str(target_name or "").strip("/")
+    if not requested:
+        return requested
+
+    requested_key = requested.casefold()
+    for item in list_targets():
+        name = str(item.get("name") or "")
+        if name.casefold() == requested_key:
+            return name
+    return requested
+
+
 def list_targets() -> list[dict]:
     """
     List all targets in TargetsRepo/ with basic metadata.

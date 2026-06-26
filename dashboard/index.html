@@ -116,6 +116,18 @@
   </form>
 </div></dialog>
 
+<!-- Requirement Viewer Modal -->
+<dialog id="requirementModal" class="requirement-dialog"><div class="modal-wrap requirement-wrap">
+  <div class="detail-header">
+    <div>
+      <div class="detail-title" id="requirementTitle">requirement.md</div>
+      <div class="requirement-path" id="requirementPath"></div>
+    </div>
+    <button class="detail-close" onclick="closeRequirementModal()">Close</button>
+  </div>
+  <div id="requirementBody" class="report-body requirement-body"></div>
+</div></dialog>
+
 <div id="toast" class="toast"></div>
 <script src="/static/app.js"></script>
 </body>

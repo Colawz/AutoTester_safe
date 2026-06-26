@@ -395,6 +395,15 @@ header p {
     transition: all 0.2s;
 }
 
+.target-card-clickable {
+    cursor: pointer;
+}
+
+.target-card-clickable:focus-visible {
+    outline: 3px solid rgba(0, 95, 75, 0.25);
+    outline-offset: 3px;
+}
+
 .card:hover {
     transform: translateY(-3px);
     box-shadow: var(--shadow);
@@ -766,6 +775,10 @@ dialog {
     background: var(--panel);
 }
 
+.requirement-dialog {
+    max-width: 920px;
+}
+
 dialog::backdrop {
     background: rgba(15, 44, 36, 0.65);
     backdrop-filter: blur(6px);
@@ -773,6 +786,12 @@ dialog::backdrop {
 
 .modal-wrap {
     padding: 26px;
+}
+
+.requirement-wrap {
+    max-height: 84vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .detail-header {
@@ -787,6 +806,14 @@ dialog::backdrop {
     font-family: var(--font-display);
     font-size: 1.2rem;
     font-weight: 800;
+}
+
+.requirement-path {
+    color: var(--muted);
+    font-size: 0.78rem;
+    line-height: 1.5;
+    margin-top: 6px;
+    word-break: break-all;
 }
 
 .detail-close {
@@ -823,6 +850,108 @@ small {
     justify-content: flex-end;
     gap: 10px;
     margin-top: 20px;
+}
+
+.report-body {
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--text);
+}
+
+.requirement-body {
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+.report-body h1,
+.report-body h2 {
+    font-family: var(--font-display);
+    margin: 22px 0 10px;
+    font-size: 19px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 6px;
+}
+
+.report-body h1:first-child,
+.report-body h2:first-child {
+    margin-top: 0;
+}
+
+.report-body h3 {
+    font-size: 15px;
+    margin: 16px 0 8px;
+    font-weight: 700;
+}
+
+.report-body p {
+    margin-bottom: 10px;
+}
+
+.report-body table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+    font-size: 13px;
+}
+
+.report-body th {
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 8px 10px;
+    text-align: left;
+}
+
+.report-body td {
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--line);
+}
+
+.report-body tr:last-child td {
+    border-bottom: none;
+}
+
+.report-body code {
+    background: #eef2ef;
+    padding: 2px 6px;
+    border-radius: 5px;
+    font-size: 12px;
+}
+
+.report-body pre {
+    background: #17201c;
+    color: #dce9e0;
+    border-radius: 12px;
+    padding: 16px;
+    overflow-x: auto;
+    margin-bottom: 14px;
+}
+
+.report-body pre code {
+    background: none;
+    color: inherit;
+    padding: 0;
+}
+
+.report-body hr {
+    border: none;
+    border-top: 1px solid var(--line);
+    margin: 18px 0;
+}
+
+.report-body strong {
+    font-weight: 700;
+}
+
+.report-body ul,
+.report-body ol {
+    padding-left: 20px;
+    margin-bottom: 10px;
+}
+
+.requirement-error {
+    color: #b91c1c;
+    padding: 20px;
+    text-align: center;
 }
 
 /* Toast */

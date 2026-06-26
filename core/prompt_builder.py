@@ -86,6 +86,16 @@ EXEC_TRACK_JOB_IDS = {
     "with_target": "exec_withtarget",
 }
 
+
+def _sample_leaf_is_security_only(sample_leaf: Path) -> bool:
+    """Detect Security Edition sample leaves that should use security workflows."""
+    sample_root = sample_leaf / "samples" if (sample_leaf / "samples").is_dir() else sample_leaf
+    return (
+        (sample_root / "security_manifest.json").exists()
+        and (sample_root / "security").is_dir()
+        and not (sample_root / "benchmark_manifest.json").exists()
+    )
+
 # ── Model marker helpers ─────────────────────────────────────────────────────
 
 def _write_json(path: Path, payload: dict) -> None:
@@ -269,11 +279,6 @@ def build_stage_prompt(
     workflow_path = Path(job["workflow_path"])
     prompt_path = Path(job["prompt_path"])
 
-    if not workflow_path.exists():
-        raise FileNotFoundError(f"Workflow file not found: {workflow_path}")
-    if not prompt_path.exists():
-        raise FileNotFoundError(f"Prompt file not found: {prompt_path}")
-
     adapter = get_harness(harness_name)
     db = database_dir or get_database_root()
 
@@ -320,6 +325,21 @@ def build_stage_prompt(
     env_exports: dict[str, str] = {}
 
     output_kind = job["output_kind"]
+
+    # Security-only sample leaves have a different contract from functional
+    # common/hard tasks. Pick the security workflows before rendering prompts.
+    if _sample_leaf_is_security_only(sample_leaf):
+        agents_dir = get_agents_dir()
+        if output_kind == "exec_withtarget":
+            workflow_path = agents_dir / "ExecAgent" / "withtarget" / "workflow_security.md"
+            prompt_path = agents_dir / "ExecAgent" / "withtarget" / "prompt_security.md"
+        elif output_kind == "spec":
+            workflow_path = agents_dir / "SpecAgent" / "workflow_security.md"
+
+    if not workflow_path.exists():
+        raise FileNotFoundError(f"Workflow file not found: {workflow_path}")
+    if not prompt_path.exists():
+        raise FileNotFoundError(f"Prompt file not found: {prompt_path}")
 
     if output_kind == "sample":
         _write_stage_model_markers("sample", sample_output_dir, harness_name, ModelLineage(task_design_model=current_model))

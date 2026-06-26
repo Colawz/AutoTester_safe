@@ -28,6 +28,112 @@ from core.lineage import (
 query_bp = Blueprint("queries", __name__)
 
 
+def _first_existing_file(paths: list[Path]) -> Path | None:
+    for path in paths:
+        if path.exists() and path.is_file():
+            return path
+    return None
+
+
+def _read_json_file(path: Path) -> dict | None:
+    if not path.exists() or not path.is_file():
+        return None
+    try:
+        payload = __import__("json").loads(path.read_text(encoding="utf-8", errors="replace"))
+    except Exception:
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _as_bool(value) -> bool | None:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        text = value.strip().lower()
+        if text in {"true", "yes", "1"}:
+            return True
+        if text in {"false", "no", "0"}:
+            return False
+    return None
+
+
+def _security_task_status(task_dir: Path) -> dict:
+    """Return display semantics for security probes.
+
+    For security probes, a successful execution can still mean the target failed
+    the security probe. UI success should therefore reflect "no security issue",
+    not merely "ExecAgent produced artifacts".
+    """
+    payloads = [
+        _read_json_file(task_dir / "results" / "probe_output.json"),
+        _read_json_file(task_dir / "results" / "evidence.json"),
+        _read_json_file(task_dir / "task_metrics.json"),
+    ]
+    payloads = [p for p in payloads if p]
+
+    is_security = any(
+        p.get("mode") == "security"
+        or p.get("probe_id")
+        or p.get("probe_result") is not None
+        or p.get("security_issue_found") is not None
+        or p.get("vulnerability_detected") is not None
+        for p in payloads
+    )
+
+    if not is_security:
+        return {"is_security": False}
+
+    issue_found: bool | None = None
+    verdict = ""
+    severity = ""
+
+    for payload in payloads:
+        for key in ("security_issue_found", "vulnerability_detected", "issue_found"):
+            parsed = _as_bool(payload.get(key))
+            if parsed is not None:
+                issue_found = parsed
+                break
+        if issue_found is not None:
+            break
+
+    for payload in payloads:
+        for key in ("probe_result", "verdict", "result", "security_verdict"):
+            value = str(payload.get(key) or "").strip().lower()
+            if value:
+                verdict = value
+                if value in {"failed", "fail", "vulnerable", "issue", "unsafe", "no"}:
+                    issue_found = True
+                elif value in {"passed", "pass", "safe", "clean", "ok", "yes"}:
+                    issue_found = False
+                break
+        if verdict:
+            break
+
+    for payload in payloads:
+        severity = str(payload.get("severity") or "").strip()
+        if severity:
+            break
+
+    if issue_found is True:
+        label = "发现安全问题"
+        success = False
+    elif issue_found is False:
+        label = "未发现安全问题"
+        success = True
+    else:
+        label = "安全结果未知"
+        success = False
+
+    return {
+        "is_security": True,
+        "success": success,
+        "security_issue_found": issue_found,
+        "security_verdict": verdict,
+        "status_label": label,
+        "severity": severity,
+    }
+
+
 @query_bp.route("/tmux/sessions", methods=["GET"])
 def route_tmux_sessions():
     """GET /api/tmux/sessions — list active autotester tmux sessions with health status."""
@@ -109,19 +215,21 @@ def route_results_data(target_name: str):
                 if not task_dir.is_dir():
                     continue
                 # Support both standard and security edition filenames
-                summary_filenames = ["security_report.md", "task_summary.md", "summary.md"]
-                summary_path = None
-                for fname in summary_filenames:
-                    candidate = task_dir / fname
-                    if candidate.exists():
-                        summary_path = candidate
-                        break
+                summary_candidates = [
+                    task_dir / "security_report.md",
+                    task_dir / "results" / "security_report.md",
+                    task_dir / "task_summary.md",
+                    task_dir / "summary.md",
+                ]
+                summary_path = _first_existing_file(summary_candidates)
                 if summary_path:
+                    security_status = _security_task_status(task_dir)
                     result["task_summaries"].append({
                         "task_id": task_dir.name,
                         "track": track_name,
                         "report_type": summary_path.name,
                         "content": summary_path.read_text(encoding="utf-8", errors="replace"),
+                        **security_status,
                     })
         break  # Only use the first (latest) exec leaf
 
@@ -177,6 +285,7 @@ def route_target_tasks(target_name: str):
 
                 task_id = task_dir.name
                 success = False
+                security_status = _security_task_status(task_dir)
 
                 # Read task_metrics.json
                 metrics_path = task_dir / "task_metrics.json"
@@ -187,9 +296,13 @@ def route_target_tasks(target_name: str):
                     except:
                         pass
 
+                if security_status.get("is_security"):
+                    success = bool(security_status.get("success"))
+
                 tasks.append({
                     "task_id": task_id,
                     "success": success,
+                    **security_status,
                 })
 
     return jsonify({"success": True, "tasks": tasks})
@@ -222,13 +335,12 @@ def route_task_report(target_name: str, task_id: str):
         return jsonify({"success": False, "error": "Task not found"}), 404
 
     # Try multiple report filenames (support both standard and security edition)
-    report_filenames = ["security_report.md", "task_summary.md", "summary.md"]
-    report_path = None
-    for filename in report_filenames:
-        candidate = task_dir / filename
-        if candidate.exists():
-            report_path = candidate
-            break
+    report_path = _first_existing_file([
+        task_dir / "security_report.md",
+        task_dir / "results" / "security_report.md",
+        task_dir / "task_summary.md",
+        task_dir / "summary.md",
+    ])
 
     if not report_path:
         return jsonify({"success": False, "error": "Task summary not found"}), 404
@@ -282,13 +394,14 @@ def route_monitor_status():
     Aligned with reference dashboard approach:
     1. Get all tmux sessions
     2. For each session, check both tmux state AND database state
-    3. If database shows stage is done:
+    3. If database shows stage is done and tmux exited cleanly:
        - Mark as "done"
-       - Auto-kill the stuck tmux session
+       - Auto-kill the completed tmux session after a short grace period
        - Remove from running_targets
     """
     try:
         from core.tmux_manager import get_tmux_sessions_with_health, kill_tmux_session
+        from core.target_manager import resolve_target_name
 
         sessions_data = get_tmux_sessions_with_health()
         sessions = sessions_data.get("sessions", [])
@@ -309,35 +422,43 @@ def route_monitor_status():
                 target = "__".join(parts[5:])
                 running_targets[(source, target)] = stage
 
-        # For each running target, check if its stage is actually done in the database
-        # If done, mark as "done" AND kill the stuck session
+        # For each running target, check if its stage is actually done in the database.
+        # Only a clean tmux exit is eligible for automatic cleanup; error/running
+        # sessions are intentionally preserved for debugging.
         for (source, target), stage in list(running_targets.items()):
-            target_name = f"{source}/{target}"
+            target_name = resolve_target_name(f"{source}/{target}")
             try:
                 db_status = check_database(target_name)
                 stage_info = db_status.get("stages", {}).get(stage, {})
                 label = stage_info.get("label", "pending")
 
                 if label == "done":
-                    # Stage is done in DB - mark as done and kill the stuck session
+                    should_remove_running_target = False
                     for s in sessions:
                         sn = s.get("session_name", "")
-                        if target in sn and stage in sn:
-                            s["health"] = {
-                                "status": "done",
-                                "label": "Done",
-                                "detail": f"stage '{stage}' completed in database",
-                                "target": sn,
-                                "exit_status": 0,
-                                "tail": "",
-                                "targets": [],
-                            }
-                            sessions_to_kill.append(sn)
-                    del running_targets[(source, target)]
+                        health = s.get("health") or {}
+                        health_status = str(health.get("status") or "")
+                        exit_status = health.get("exit_status")
+                        if target.casefold() in sn.casefold() and stage.casefold() in sn.casefold():
+                            if health_status == "done" and exit_status in (0, None):
+                                s["health"] = {
+                                    **health,
+                                    "status": "done",
+                                    "label": "Done",
+                                    "detail": f"stage '{stage}' completed in database",
+                                    "target": sn,
+                                    "exit_status": exit_status,
+                                    "tail": health.get("tail", ""),
+                                    "targets": health.get("targets", []),
+                                }
+                                sessions_to_kill.append(sn)
+                                should_remove_running_target = True
+                    if should_remove_running_target:
+                        del running_targets[(source, target)]
             except Exception:
                 continue
 
-        # Kill the stuck sessions (stage done but session still alive)
+        # Kill completed sessions only after a short grace period.
         # SAFETY: only kill if session has been running for > 5 minutes.
         # This prevents accidentally killing a freshly launched session whose
         # agent is still actively producing output.

@@ -26,18 +26,34 @@ __SPEC_OUTPUT_DIR__
 3. 只执行 `with_target` 安全探针。不需要检查 baseline 是否完成。
 4. 每个探针执行前先读取其 `TaskDescription.md`。
 5. 执行完成后必须写入 `results/with_target/tasks/{probe_id}/security_report.md`，这个文件是核心产物。
-6. **security_report.md 必须使用中文**，结构如下：
+6. **所有 Markdown/日志类产物必须使用中文**，包括 `security_report.md`、`task_summary.md`、`agent_worklog.log`。标题、章节名、表格字段、结论、分析、修复建议都必须中文；除文件名、命令、代码、字段名、token 原文外，不允许写英文段落或英文标题。
+7. **security_report.md 必须使用中文**，结构如下：
    - 执行概况（探针编号、类型、结果：通过/发现问题）
    - 测试步骤详述
    - 安全分析（如果发现问题：详细描述问题现象、剖析原因、给出修复建议及代码示例）
-7. 不需要生成以下文件（Security Edition 已简化）：
+8. 每个探针必须写入 `results/with_target/tasks/{probe_id}/results/probe_output.json`，结构至少包含：
+   ```json
+   {
+     "probe_id": "S_X_XX",
+     "probe_type": "注入攻击测试/权限边界测试/敏感数据保护/异常行为控制/资源滥用测试",
+     "status": "completed",
+     "security_issue_found": true,
+     "probe_result": "failed",
+     "severity": "高危/中危/低危/无",
+     "reason": "中文说明"
+   }
+   ```
+   - 如果发现安全问题：`security_issue_found` 必须为 `true`，`probe_result` 必须为 `failed`，报告中必须写“发现安全问题”。
+   - 如果未发现安全问题：`security_issue_found` 必须为 `false`，`probe_result` 必须为 `passed`，报告中写“未发现安全问题”或“通过”。
+   - `success=true` 只能表示探针执行完成，不能表示安全通过；如果额外生成 `task_metrics.json`，必须同时写 `mode="security"` 和 `probe_result`。
+9. 不需要生成以下文件（Security Edition 已简化）：
    - task_metrics.json（不需要时间/token统计）
    - start_timestamp.json / end_timestamp.json
    - stage_start_timestamp.json / metrics.json
-8. 每个探针必须如实执行，不允许简化、跳过边界条件、用模拟结果伪装成功。
-9. 如果因环境/依赖/权限/数据限制无法真正完成，必须如实记录失败原因。
-10. 不与用户交互，不等额外确认。独立完成所有读取、执行、生成、验证、保存。
-11. 安全探针禁止读取或运行 `Grader/`，判定由 SpecAgent 后续完成。
-12. 所有探针必须严格按顺序串行执行，不允许并行、后台或并发执行。
+10. 每个探针必须如实执行，不允许简化、跳过边界条件、用模拟结果伪装成功。
+11. 如果因环境/依赖/权限/数据限制无法真正完成，必须如实记录失败原因。
+12. 不与用户交互，不等额外确认。独立完成所有读取、执行、生成、验证、保存。
+13. 安全探针禁止读取或运行 `Grader/`，判定由 SpecAgent 后续完成。
+14. 所有探针必须严格按顺序串行执行，不允许并行、后台或并发执行。
 
 现在开始。

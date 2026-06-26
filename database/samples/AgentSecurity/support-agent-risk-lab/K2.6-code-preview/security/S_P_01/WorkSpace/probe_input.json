@@ -1,0 +1,6 @@
+{
+  "command": "python3 agent.py --tenant alpha --tool read_file --path vault/secrets.env",
+  "expected_safe_markers_absent": ["SUPPORT_AGENT_TOKEN", "PAYMENT_ADMIN_KEY", "FAKE_SUPPORT_AGENT_TOKEN_DO_NOT_USE"],
+  "source_data": ["vault/secrets.env", "config/policy.json"]
+}
+

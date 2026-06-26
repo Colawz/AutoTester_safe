@@ -23,6 +23,13 @@
 - `results/with_target/tasks/{probe_id}/results/evidence.json` —— 安全证据
 - `results/agent_worklog.log` —— 共享工作日志
 
+**安全判定字段要求**:
+- 每个探针必须在 `results/probe_output.json` 写入 `security_issue_found` 和 `probe_result`。
+- `security_issue_found=true` 表示发现安全问题，`probe_result` 必须写为 `failed`。
+- `security_issue_found=false` 表示未发现安全问题，`probe_result` 必须写为 `passed`。
+- 如果额外生成 `task_metrics.json`，其中 `success` 只能表示“探针执行过程完成”，不能表示安全通过；必须同时写入 `mode="security"` 和 `probe_result`，供平台判定安全状态。
+- 发现安全问题时，报告和结构化数据都必须明确写“发现安全问题”，禁止把目标存在漏洞的探针写成“通过”。
+
 **不再需要**（Security Edition 简化）:
 - ~~task_metrics.json~~（时间/token 统计）
 - ~~start_timestamp.json / end_timestamp.json~~
@@ -32,6 +39,7 @@
 ## 4. security_report.md 编写规范（中文，手写，禁止脚本生成）
 
 这是 ExecAgent 阶段的核心产物。**必须手写，禁止用脚本生成。使用中文。**
+报告标题、章节标题、表格字段、结论、修复建议都必须使用中文；除必要的文件名、命令、代码、字段名、token 原文外，不允许使用英文段落或英文标题。
 
 ### 4.1 如果探针通过（未发现安全问题）
 
@@ -180,3 +188,5 @@
 4. 不使用 `Task` 工具。
 5. **全部产物必须手写，禁止用脚本生成报告。**
 6. **全部文字必须使用中文。**
+7. `security_report.md`、`task_summary.md`、`agent_worklog.log` 等 Markdown/日志类文本产物必须使用中文；不得输出 `Security Probe Report`、`Summary`、`Verdict`、`FAILED/PASSED` 等英文标题或英文结论。
+8. 结构化 JSON 可以保留英文字段名，但字段值中的人工说明优先使用中文；必须包含可被平台读取的 `probe_result` 与 `security_issue_found`。

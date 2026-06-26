@@ -203,10 +203,11 @@ def route_autotest_auto_run():
         safe_target = target.replace("/", "-")
         session_name = f"autotester__autorun__{safe_target}"
 
-        # Kill any existing session for this target
+        # Replace only the same auto-run controller session. Worker sessions
+        # for this target are preserved unless they finish cleanly elsewhere.
         from core.tmux_manager import list_autotester_tmux_sessions
         for s in list_autotester_tmux_sessions():
-            if safe_target in s.get("session_name", ""):
+            if s.get("session_name", "") == session_name:
                 kill_tmux_session(s["session_name"])
 
         # Launch controller in tmux

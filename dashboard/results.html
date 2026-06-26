@@ -162,10 +162,18 @@ async function load() {
     if (tasks.length) {
       html += '<div class="task-list">';
       tasks.forEach((t, i) => {
+        const statusTag = t.is_security
+          ? '<span class="tag ' + (t.success ? 'tag-pass' : 'tag-fail') + '">' + esc(t.status_label || (t.success ? '未发现安全问题' : '发现安全问题')) + '</span>'
+          : '';
+        const severityTag = t.severity
+          ? '<span class="tag tag-fail">' + esc(t.severity) + '</span>'
+          : '';
         html += '<div class="task-item">' +
           '<div class="task-header" onclick="toggleTask(this)">' +
             '<span>' + esc(t.task_id) + '</span>' +
             '<span class="track track-' + t.track + '">' + esc(t.track) + '</span>' +
+            statusTag +
+            severityTag +
             '<span style="margin-left:auto;font-size:.75rem;color:var(--muted)">▼</span>' +
           '</div>' +
           '<div class="task-body' + (i===0?' open':'') + '">' +

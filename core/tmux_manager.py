@@ -505,7 +505,7 @@ def classify_tmux_session_health_light(
     1. Capture pane tail → look for "Exit status: N"
     2. Exit status found:
        - non-zero → Failed
-       - zero in all panes → Done
+       - zero in all panes → Done, even if the pane remains open at a shell prompt
        - zero in some panes → Running (others still running)
     3. No exit status + dead panes with status 0 → Done
     4. No exit status + dead panes unexpectedly → Dead
@@ -525,16 +525,29 @@ def classify_tmux_session_health_light(
     tails: list[str] = []
     pane_exit_statuses: list[int] = []
 
-    # Capture first pane only (performance: 1 capture, not 6)
-    for pane_target in targets[:1]:
+    def capture_exit_status(pane_target: str) -> int | None:
         captured = capture_tmux_pane(pane_target, line_count=80)
         if not captured.get("success"):
-            continue
+            return None
         pane_tail = str(captured.get("content", ""))
         tails.append(pane_tail)
         m = re.search(r"Exit status:\s*(-?\d+)", pane_tail)
         if m:
-            pane_exit_statuses.append(int(m.group(1)))
+            return int(m.group(1))
+        return None
+
+    # Capture the first pane for the common fast path. If it has completed
+    # cleanly, inspect the rest so a multi-pane session is not marked done early.
+    for pane_target in targets[:1]:
+        exit_code = capture_exit_status(pane_target)
+        if exit_code is not None:
+            pane_exit_statuses.append(exit_code)
+
+    if pane_exit_statuses and all(code == 0 for code in pane_exit_statuses) and len(targets) > 1:
+        for pane_target in targets[1:]:
+            exit_code = capture_exit_status(pane_target)
+            if exit_code is not None:
+                pane_exit_statuses.append(exit_code)
 
     # Classify based on pane output
     if pane_exit_statuses:
@@ -544,7 +557,7 @@ def classify_tmux_session_health_light(
             status = "failed"
             label = "Failed"
             detail = f"exit status {exit_status}"
-        elif dead_panes and len(dead_panes) == len(panes):
+        elif len(pane_exit_statuses) == len(targets):
             exit_status = 0
             status = "done"
             label = "Done"

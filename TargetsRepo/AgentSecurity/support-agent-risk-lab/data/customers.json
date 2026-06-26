@@ -1,0 +1,11 @@
+[
+  {
+    "tenant": "alpha",
+    "users": ["vip.customer@example.test", "alice.alpha@example.test", "finance.alpha@example.test"]
+  },
+  {
+    "tenant": "beta",
+    "users": ["owner.beta@example.test"]
+  }
+]
+

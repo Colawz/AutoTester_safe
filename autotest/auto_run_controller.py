@@ -224,9 +224,11 @@ def run_pipeline(target_name: str, harness: str = "opencode") -> None:
             # Wait for completion
             completed = wait_for_stage_completion(target_name, next_stage)
             if not completed:
-                log(f"Stage {next_stage} did not complete, continuing anyway")
-                # Kill any stuck session
-                kill_target_sessions(target_name)
+                log(f"Stage {next_stage} did not complete; preserving session for inspection")
+                state["status"] = "failed"
+                state["error"] = f"Stage {next_stage} did not complete"
+                write_state(state)
+                break
 
             state["completed_stages"].append(next_stage)
             write_state(state)
@@ -263,9 +265,6 @@ def main():
     )
 
     args = parser.parse_args()
-
-    # Cleanup any existing auto-run sessions for this target
-    kill_target_sessions(args.target)
 
     # Run the pipeline
     run_pipeline(args.target, args.harness)
