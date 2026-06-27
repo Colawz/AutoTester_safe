@@ -12,7 +12,8 @@ from pathlib import Path
 # Ensure project root is on path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from flask import Flask
+from flask import Flask, jsonify
+from werkzeug.exceptions import RequestEntityTooLarge
 
 from api.routes_target import target_bp
 from api.routes_stage import stage_bp
@@ -40,6 +41,14 @@ def create_app() -> Flask:
     app.register_blueprint(stage_bp, url_prefix="/api")
     app.register_blueprint(query_bp, url_prefix="/api")
     app.register_blueprint(autotest_bp, url_prefix="/api")
+
+    @app.errorhandler(RequestEntityTooLarge)
+    def handle_request_too_large(exc):
+        max_mb = get_max_upload_size_mb()
+        return jsonify({
+            "success": False,
+            "error": f"Request body is too large. Max upload size is {max_mb} MB.",
+        }), 413
 
     # Serve dashboard index.html at /
     dashboard_dir = Path(__file__).resolve().parent.parent / "dashboard"

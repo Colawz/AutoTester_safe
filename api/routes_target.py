@@ -5,12 +5,16 @@ Target management routes for AutoTester.
 from __future__ import annotations
 
 import base64
+import binascii
+import io
 import sys
+import zipfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from flask import Blueprint, jsonify, request
+from werkzeug.exceptions import BadRequest
 
 from core.scanner import scan_all_targets, check_database
 from core.target_manager import create_target, delete_target, get_target_path, list_targets
@@ -21,7 +25,13 @@ target_bp = Blueprint("targets", __name__)
 @target_bp.route("/targets", methods=["POST"])
 def create_target_route():
     """POST /api/targets — create a new target with requirement.md + optional source zip."""
-    body = request.get_json(silent=True) or {}
+    try:
+        body = request.get_json(silent=False) or {}
+    except BadRequest:
+        return jsonify({"success": False, "error": "Invalid JSON request body"}), 400
+
+    if not isinstance(body, dict):
+        return jsonify({"success": False, "error": "JSON request body must be an object"}), 400
 
     name = str(body.get("name", "")).replace("\\", "/").strip()
     description = str(body.get("description", "")).strip()
@@ -37,9 +47,14 @@ def create_target_route():
     source_zip_raw = None
     if body.get("source_zip"):
         try:
-            source_zip_raw = base64.b64decode(body["source_zip"])
-        except Exception:
+            source_zip_text = str(body["source_zip"]).strip()
+            if "," in source_zip_text and source_zip_text.lower().startswith("data:"):
+                source_zip_text = source_zip_text.split(",", 1)[1]
+            source_zip_raw = base64.b64decode(source_zip_text, validate=True)
+        except (binascii.Error, ValueError):
             return jsonify({"success": False, "error": "Invalid base64 encoding for source_zip"}), 400
+        if not zipfile.is_zipfile(io.BytesIO(source_zip_raw)):
+            return jsonify({"success": False, "error": "Uploaded source_zip must be a valid .zip file"}), 400
 
     try:
         result = create_target(name, description, source_zip_raw)

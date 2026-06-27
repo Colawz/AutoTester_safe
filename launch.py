@@ -91,6 +91,10 @@ def main():
     platform = select_platform()
     set_platform_env(platform)
 
+    from core.windows_admin import ensure_backend_admin_or_relaunch
+    if not ensure_backend_admin_or_relaunch(platform, Path(__file__).resolve(), sys.argv[1:]):
+        return
+
     # Get server config
     from core.config import get_server_host, get_server_port
     host = get_server_host()

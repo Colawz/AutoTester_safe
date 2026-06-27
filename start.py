@@ -125,6 +125,11 @@ def main():
         action="store_true",
         help="Skip interactive platform selection",
     )
+    parser.add_argument(
+        "--no-elevate",
+        action="store_true",
+        help="On Windows, do not relaunch the backend with administrator privileges",
+    )
 
     args = parser.parse_args()
 
@@ -151,6 +156,15 @@ def main():
 
     # Set environment
     os.environ["AUTOTEST_PLATFORM"] = platform
+
+    from core.windows_admin import ensure_backend_admin_or_relaunch
+    if not ensure_backend_admin_or_relaunch(
+        platform,
+        Path(__file__).resolve(),
+        sys.argv[1:],
+        enabled=not args.no_elevate,
+    ):
+        return
 
     # Get config
     from core.config import get_server_host, get_server_port

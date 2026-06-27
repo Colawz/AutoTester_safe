@@ -10,6 +10,7 @@ Handles:
 from __future__ import annotations
 
 import base64
+import re
 import shutil
 import tempfile
 import zipfile
@@ -18,13 +19,26 @@ from pathlib import Path
 from .config import get_database_root, get_targets_root
 
 
+_WINDOWS_RESERVED_NAMES = {
+    "CON", "PRN", "AUX", "NUL",
+    *(f"COM{i}" for i in range(1, 10)),
+    *(f"LPT{i}" for i in range(1, 10)),
+}
+_WINDOWS_INVALID_FILENAME_CHARS = set('<>:"|?*')
+_WINDOWS_SAFE_PATH_LIMIT = 240
+
+
 def _normalize_target_name(name: str) -> str:
     return str(name or "").replace("\\", "/").strip("/")
 
 
 def _parse_target_name(name: str) -> tuple[str, str]:
     """Parse 'source/target_name' into (source, target_name)."""
-    parts = [p for p in _normalize_target_name(name).split("/") if p]
+    normalized = _normalize_target_name(name)
+    if re.match(r"^[A-Za-z]:/", normalized):
+        raise ValueError("Target name must use 'source/target' format, not a local filesystem path")
+
+    parts = [p for p in normalized.split("/") if p]
     if len(parts) < 2:
         raise ValueError(
             f"Target name must be in 'source/target' format, got: {name!r}"
@@ -38,7 +52,45 @@ def _safe_name(segment: str) -> str:
     """Sanitize a path segment for use in directory names."""
     safe = segment.strip().replace(" ", "-")
     safe = "".join(c for c in safe if c.isalnum() or c in "-_.")
-    return safe.strip(".") or "untitled"
+    safe = safe.strip(".") or "untitled"
+    if safe.split(".", 1)[0].upper() in _WINDOWS_RESERVED_NAMES:
+        raise ValueError(f"Target path segment {segment!r} is reserved on Windows")
+    return safe
+
+
+def _validate_windows_path_length(path: Path) -> None:
+    if len(str(path)) > _WINDOWS_SAFE_PATH_LIMIT:
+        raise ValueError(
+            "Target path is too long for Windows. Shorten source/target or move the repository closer to the drive root."
+        )
+
+
+def _validate_windows_zip_part(part: str) -> None:
+    if not part or part in {".", ".."}:
+        raise ValueError(f"Unsafe path in source_zip: {part!r}")
+    if part.rstrip(" .") != part:
+        raise ValueError(f"Zip path segment {part!r} is not supported on Windows")
+    if any(ch in _WINDOWS_INVALID_FILENAME_CHARS or ord(ch) < 32 for ch in part):
+        raise ValueError(f"Zip path segment {part!r} contains characters not supported on Windows")
+    if part.split(".", 1)[0].upper() in _WINDOWS_RESERVED_NAMES:
+        raise ValueError(f"Zip path segment {part!r} is reserved on Windows")
+
+
+def _safe_zip_parts(filename: str) -> list[str] | None:
+    normalized = str(filename or "").replace("\\", "/")
+    if normalized.startswith("__MACOSX/") or "/__MACOSX/" in normalized:
+        return None
+    if normalized.startswith("/") or re.match(r"^[A-Za-z]:/", normalized):
+        raise ValueError(f"Unsafe absolute path in source_zip: {filename!r}")
+
+    parts = [p for p in normalized.split("/") if p]
+    if any(part == ".." for part in parts):
+        raise ValueError(f"Unsafe path in source_zip: {filename!r}")
+    if any(part.startswith(".") for part in parts):
+        return None
+    for part in parts:
+        _validate_windows_zip_part(part)
+    return parts or None
 
 
 def get_target_path(target_name: str) -> Path:
@@ -115,36 +167,43 @@ def create_target(
     safe_target = _safe_name(target)
 
     target_dir = get_targets_root() / safe_source / safe_target
-    target_dir.mkdir(parents=True, exist_ok=True)
-
-    # Write requirement description
+    _validate_windows_path_length(target_dir / "requirement.md")
+    target_existed = target_dir.exists()
     requirement_path = target_dir / "requirement.md"
-    requirement_path.write_text(str(description), encoding="utf-8")
-
-    # Extract source data if provided
     has_source = False
-    if source_zip:
-        source_dir = target_dir / "source"
-        source_dir.mkdir(exist_ok=True)
 
-        # Decode base64 to bytes
-        if isinstance(source_zip, str):
-            data = base64.b64decode(source_zip)
-        else:
-            data = source_zip
+    try:
+        target_dir.mkdir(parents=True, exist_ok=True)
 
-        # Write to temp file, extract
-        with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as tmp:
-            tmp.write(data)
-            tmp_path = Path(tmp.name)
+        # Write requirement description
+        requirement_path.write_text(str(description), encoding="utf-8")
 
-        try:
-            with zipfile.ZipFile(tmp_path, "r") as zf:
-                # Security: check for zip bombs and path traversal
-                _safe_extract(zf, source_dir)
-            has_source = True
-        finally:
-            tmp_path.unlink(missing_ok=True)
+        # Extract source data if provided
+        if source_zip:
+            source_dir = target_dir / "source"
+            source_dir.mkdir(exist_ok=True)
+
+            # Decode base64 to bytes
+            if isinstance(source_zip, str):
+                data = base64.b64decode(source_zip)
+            else:
+                data = source_zip
+
+            # Write to temp file, extract
+            with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as tmp:
+                tmp.write(data)
+                tmp_path = Path(tmp.name)
+
+            try:
+                with zipfile.ZipFile(tmp_path, "r") as zf:
+                    _safe_extract(zf, source_dir)
+                has_source = True
+            finally:
+                tmp_path.unlink(missing_ok=True)
+    except Exception:
+        if not target_existed and target_dir.exists():
+            shutil.rmtree(target_dir)
+        raise
 
     return {
         "success": True,
@@ -197,15 +256,15 @@ def _safe_extract(zf: zipfile.ZipFile, dest: Path) -> None:
     dest = dest.resolve()
 
     for member in zf.infolist():
-        # Skip macOS resource forks and hidden metadata
-        if member.filename.startswith("__MACOSX") or "/__MACOSX" in member.filename:
-            continue
-        if member.filename.startswith("."):
+        parts = _safe_zip_parts(member.filename)
+        if parts is None:
             continue
 
-        member_path = (dest / member.filename).resolve()
-        if not str(member_path).startswith(str(dest)):
-            continue  # path traversal attempt
+        member_path = dest.joinpath(*parts).resolve()
+        try:
+            member_path.relative_to(dest)
+        except ValueError:
+            raise ValueError(f"Unsafe path in source_zip: {member.filename!r}") from None
 
         if member.is_dir():
             member_path.mkdir(parents=True, exist_ok=True)
