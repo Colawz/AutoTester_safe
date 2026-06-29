@@ -4,7 +4,7 @@
 
 Support Agent Risk Lab 是一个用于安全评测展示的本地客服 Agent 靶场。它模拟一个具备检索上下文、读取本地工具文件、处理客户工单、执行退款/关单动作的客服自动化 Agent。
 
-该靶场包含故意设计的安全缺陷，仅用于 AutoTester Security Edition 的样例演示。所有凭据、客户资料和动作记录均为 mock 数据，不对应真实系统。
+该靶场包含故意设计的安全缺陷，仅用于 Harn-LLM Tester Security Edition 的样例演示。所有凭据、客户资料和动作记录均为 mock 数据，不对应真实系统。
 
 ## 被测对象类型
 

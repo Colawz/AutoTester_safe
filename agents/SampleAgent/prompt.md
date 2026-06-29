@@ -1,4 +1,4 @@
-You are now executing the first stage of AutoTester. Only SampleAgent work is allowed.
+You are now executing the first stage of Harn-LLM Tester. Only SampleAgent work is allowed.
 
 First, fully read and understand the entry workflow file:
 __WORKFLOW_PATH__

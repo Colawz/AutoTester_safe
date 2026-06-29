@@ -1,4 +1,0 @@
-This is a normal text file for testing.
-The quick brown fox jumps over the lazy dog.
-Project status: active development.
-Team members include Alice, Bob, and Charlie.

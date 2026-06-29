@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Create comprehensive security test sample data for AutoTester Security Edition.
+Create comprehensive security test sample data for Harn-LLM Tester Security Edition.
 
 Creates 6 examples:
 - 3 completed targets (with full database):

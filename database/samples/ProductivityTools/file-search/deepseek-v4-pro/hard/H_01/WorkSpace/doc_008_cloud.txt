@@ -1,5 +1,0 @@
-Hybrid cloud combines public and private cloud infrastructure.
-Cloud migration strategies include lift-and-shift and re-platforming.
-Cloud governance ensures compliance with regulatory requirements.
-FinOps practices optimize cloud spending across organizations.
-Cloud architecture patterns include microservices and event-driven design.

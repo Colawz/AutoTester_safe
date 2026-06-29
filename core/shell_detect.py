@@ -1,5 +1,5 @@
 """
-Cross-platform shell detection for AutoTester.
+Cross-platform shell detection for Harn-LLM Tester.
 
 Detects the best available shell and provides platform-appropriate
 command quoting, script generation, and tmux availability checks.

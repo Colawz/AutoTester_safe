@@ -1,4 +1,4 @@
-// AutoTester Dashboard
+// Harn-LLM Tester Dashboard
 let harness='opencode',execMode='single',targets=[],atTimer=null,statusFilter='',sourceFilter='';
 window.activeSessions = [];
 const MAX_TARGET_ZIP_BYTES = 37 * 1024 * 1024;

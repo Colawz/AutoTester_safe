@@ -1,5 +1,0 @@
-Multi-cloud strategies reduce vendor lock-in risks.
-Cloud security requires shared responsibility between provider and customer.
-Cloud cost optimization is a key challenge for enterprises.
-Automated cloud orchestration tools simplify infrastructure management.
-Cloud-native applications are designed for scalability and resilience.

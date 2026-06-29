@@ -1,4 +1,0 @@
-The project uses apple technology stack.
-apple provides excellent developer tools.
-apple ecosystem ensures smooth integration.
-apple design principles guide our UI.

@@ -1,5 +1,5 @@
 """
-Path resolution and model lineage extraction for AutoTester.
+Path resolution and model lineage extraction for Harn-LLM Tester.
 
 Migrated from SkillTester's dashboard/benchmark_lineage.py.
 Handles the three-tier directory hierarchy:

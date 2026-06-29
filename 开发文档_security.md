@@ -1,8 +1,8 @@
-# AutoTester Security Edition - 安全测试特化版开发文档
+# Harn-LLM Tester Security Edition - 安全测试特化版开发文档
 
 ## 1. 软件定位
 
-AutoTester Security Edition 是针对**安全性测试特化**的版本，专注于：
+Harn-LLM Tester Security Edition 是针对**安全性测试特化**的版本，专注于：
 - 自动生成安全测试探针
 - 执行安全边界测试
 - 深度分析安全问题

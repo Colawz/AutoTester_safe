@@ -1,5 +1,5 @@
 """
-Platform detection and dispatch for AutoTester.
+Platform detection and dispatch for Harn-LLM Tester.
 
 Provides unified interface for:
 - Platform detection (macOS, Windows, Linux)

@@ -1,3 +1,0 @@
-Quantum computing will revolutionize computation.
-Superconducting qubits operate at millikelvin temperatures.
-Error correction is the main challenge in quantum computing.

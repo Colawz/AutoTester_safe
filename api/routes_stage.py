@@ -1,5 +1,5 @@
 """
-Stage operation routes for AutoTester.
+Stage operation routes for Harn-LLM Tester.
 """
 
 from __future__ import annotations

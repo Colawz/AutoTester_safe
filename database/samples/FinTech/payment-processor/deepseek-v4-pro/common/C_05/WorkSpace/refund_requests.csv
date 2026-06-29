@@ -1,7 +1,0 @@
-refund_id,transaction_id,amount,reason,status
-REF001,TXN1001,150.00,customer_request,pending
-REF002,TXN1002,2300.00,duplicate_charge,pending
-REF003,TXN1003,45.99,product_defective,pending
-REF004,TXN1004,678.50,customer_request,pending
-REF005,TXN1005,1200.00,wrong_amount,pending
-REF006,TXN1006,89.99,customer_request,pending

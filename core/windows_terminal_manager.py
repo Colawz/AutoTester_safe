@@ -1,5 +1,5 @@
 """
-Windows Terminal management for AutoTester.
+Windows Terminal management for Harn-LLM Tester.
 
 Provides Windows-specific terminal launching using Windows Terminal,
 PowerShell, or CMD as fallbacks.
@@ -25,7 +25,8 @@ from .session_kill_policy import session_kill_enabled
 _ES_CONTINUOUS = 0x80000000
 _ES_SYSTEM_REQUIRED = 0x00000001
 _ES_DISPLAY_REQUIRED = 0x00000002
-TERMINAL_FINISH_MARKER = "AutoTester runner command finished"
+TERMINAL_FINISH_MARKER = "Harn-LLM Tester runner command finished"
+LEGACY_TERMINAL_FINISH_MARKER = "AutoTester runner command finished"
 
 
 def _registry_path() -> Path:
@@ -213,11 +214,11 @@ def write_powershell_job_script(
         if str(value or "").strip()
     )
 
-    script = f"""# AutoTester Job Script
+    script = f"""# Harn-LLM Tester Job Script
 # Title: {title}
 
 Write-Host "========================================"
-Write-Host "  AutoTester - {title}"
+Write-Host "  Harn-LLM Tester - {title}"
 Write-Host "========================================"
 Write-Host "Started at: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss zzz')"
 
@@ -368,7 +369,7 @@ def open_powershell_window(
 
 def list_windows_terminal_tabs() -> list[dict[str, Any]]:
     """
-    List Windows Terminal tabs running AutoTester jobs.
+    List Windows Terminal tabs running Harn-LLM Tester jobs.
 
     Note: This is best-effort detection on Windows.
     Returns list of tab-like objects with basic info.
@@ -430,7 +431,7 @@ def classify_windows_terminal_health(
     stage: str = "",
     verify_database: bool = False,
 ) -> dict[str, Any]:
-    """Classify a Windows-launched AutoTester job from pid + persisted log."""
+    """Classify a Windows-launched Harn-LLM Tester job from pid + persisted log."""
     script_path = str(job.get("script_path") or "")
     log_path = str(job.get("log_path") or "")
     pid = str(job.get("pid") or "").strip()
@@ -447,7 +448,10 @@ def classify_windows_terminal_health(
     if match:
         exit_status = int(match.group(1))
 
-    has_finished_marker = TERMINAL_FINISH_MARKER.lower() in lower_tail
+    has_finished_marker = any(
+        marker.lower() in lower_tail
+        for marker in (TERMINAL_FINISH_MARKER, LEGACY_TERMINAL_FINISH_MARKER)
+    )
     error_patterns = [
         r"\btraceback\b",
         r"\bexception\b",

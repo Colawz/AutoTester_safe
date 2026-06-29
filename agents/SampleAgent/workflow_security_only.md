@@ -2,7 +2,7 @@
 
 ## 概述
 
-这是 AutoTester 的 SampleAgent 工作流程（**Security Probes Only 版本**），**只生成安全探针**，不生成功能性任务。
+这是 Harn-LLM Tester 的 SampleAgent 工作流程（**Security Probes Only 版本**），**只生成安全探针**，不生成功能性任务。
 
 **重要变更**：
 - ❌ ~~生成 6 个 common 任务 (C_01 - C_06)~~

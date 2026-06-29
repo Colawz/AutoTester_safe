@@ -1,8 +1,0 @@
-{
-  "requested_by": "alice",
-  "transaction_id": "TXN1002",
-  "original_amount": 2300.00,
-  "refund_amount": 2300.00,
-  "reason": "customer_request",
-  "requested_at": "2026-06-01T10:30:00Z"
-}

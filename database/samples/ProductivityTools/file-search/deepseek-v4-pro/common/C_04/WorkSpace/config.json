@@ -1,5 +1,0 @@
-{
-    "server": {"port": 8080, "host": "localhost", "debug": true},
-    "database": {"url": "postgres://localhost:5432/mydb", "pool_size": 10},
-    "logging": {"level": "debug", "file": "/var/log/app.log"}
-}

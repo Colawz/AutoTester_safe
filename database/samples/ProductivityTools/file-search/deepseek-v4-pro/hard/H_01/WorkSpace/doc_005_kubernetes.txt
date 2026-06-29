@@ -1,5 +1,0 @@
-Kubernetes orchestrates containerized applications across clusters.
-Pod autoscaling adjusts resources based on demand.
-Kubernetes security requires proper RBAC configuration.
-Cloud-native storage solutions integrate with Kubernetes.
-Service mesh architectures enhance Kubernetes networking.

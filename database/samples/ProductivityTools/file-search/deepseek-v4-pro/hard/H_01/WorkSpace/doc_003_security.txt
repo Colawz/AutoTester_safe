@@ -1,5 +1,0 @@
-Zero trust architecture assumes no implicit trust for any entity.
-Network segmentation limits lateral movement in case of breach.
-Cloud security posture management tools continuously assess risks.
-Identity and access management is the foundation of cloud security.
-Security automation reduces response time for incidents.

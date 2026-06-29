@@ -1,4 +1,4 @@
-You are now executing the `baseline` stage of AutoTester ExecAgent. Only the baseline track may be completed.
+You are now executing the `baseline` stage of Harn-LLM Tester ExecAgent. Only the baseline track may be completed.
 
 First, fully read and understand the workflow file:
 __WORKFLOW_PATH__

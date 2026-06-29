@@ -1,5 +1,5 @@
 """
-Query routes for AutoTester — sessions, pane capture, reports, results viewer.
+Query routes for Harn-LLM Tester — sessions, pane capture, reports, results viewer.
 """
 
 from __future__ import annotations
@@ -19,6 +19,9 @@ from core.lineage import (
     resolve_exec_stage_dir,
     iter_exec_leaf_dirs,
     extract_lineage_from_exec_leaf,
+    sample_leaf_mtime,
+    sample_target_root,
+    iter_sample_leaf_dirs,
     specs_target_root,
     spec_template_path,
     iter_spec_leaf_dirs,
@@ -132,6 +135,52 @@ def _security_task_status(task_dir: Path) -> dict:
         "status_label": label,
         "severity": severity,
     }
+
+
+def _resolved_sample_dir(sample_leaf: Path) -> Path:
+    nested = sample_leaf / "samples"
+    if nested.exists() and nested.is_dir():
+        return nested
+    return sample_leaf
+
+
+def _sample_task_category(sample_root: Path, task_desc_path: Path) -> str:
+    try:
+        parts = task_desc_path.relative_to(sample_root).parts
+    except ValueError:
+        return ""
+    if not parts:
+        return ""
+    if parts[0] in {"common", "hard"}:
+        return parts[0]
+    if parts[0] == "security":
+        if len(parts) >= 4:
+            return parts[1]
+        return "security"
+    return parts[0]
+
+
+def _collect_sample_tasks(sample_leaf: Path) -> list[dict]:
+    sample_root = _resolved_sample_dir(sample_leaf)
+    tasks: list[dict] = []
+    seen: set[str] = set()
+    for desc_path in sorted(sample_root.rglob("TaskDescription.md")):
+        if not desc_path.is_file():
+            continue
+        task_id = desc_path.parent.name
+        if not task_id or task_id in seen:
+            continue
+        seen.add(task_id)
+        tasks.append({
+            "task_id": task_id,
+            "success": None,
+            "execution_status": "none",
+            "status_label": "none",
+            "category": _sample_task_category(sample_root, desc_path),
+            "has_exec_report": False,
+            "has_task_description": True,
+        })
+    return tasks
 
 
 def _merge_health_summaries(*summaries: dict) -> dict[str, int]:
@@ -337,8 +386,18 @@ def route_target_tasks(target_name: str):
                 tasks.append({
                     "task_id": task_id,
                     "success": success,
+                    "execution_status": "pass" if success else "fail",
+                    "has_exec_report": True,
+                    "has_task_description": True,
                     **security_status,
                 })
+
+    if not tasks:
+        sample_root = sample_target_root(db, source, target)
+        sample_leaves = list(iter_sample_leaf_dirs(sample_root))
+        if sample_leaves:
+            sample_leaf = max(sample_leaves, key=lambda p: sample_leaf_mtime(p))
+            tasks = _collect_sample_tasks(sample_leaf)
 
     return jsonify({"success": True, "tasks": tasks})
 
@@ -394,27 +453,26 @@ def route_task_description(target_name: str, task_id: str):
     source, target = parts[0], "/".join(parts[1:]) if len(parts) > 1 else ""
 
     # Find sample leaf
-    sample_root = Path(db) / "samples" / source / target
+    sample_root = sample_target_root(db, source, target)
     if not sample_root.exists():
         return jsonify({"success": False, "error": "No samples found"}), 404
 
     # Find the latest sample leaf
-    sample_leaves = [d for d in sample_root.iterdir() if d.is_dir()]
+    sample_leaves = list(iter_sample_leaf_dirs(sample_root))
     if not sample_leaves:
         return jsonify({"success": False, "error": "No sample leaves found"}), 404
 
-    sample_leaf = max(sample_leaves, key=lambda p: p.stat().st_mtime)
+    sample_leaf = max(sample_leaves, key=lambda p: sample_leaf_mtime(p))
+    resolved_sample = _resolved_sample_dir(sample_leaf)
 
     # Try to find TaskDescription.md
-    # Look in common/{task_id}/TaskDescription.md and hard/{task_id}/TaskDescription.md
-    for category in ["common", "hard", "security"]:
-        task_desc_path = sample_leaf / category / task_id / "TaskDescription.md"
-        if task_desc_path.exists():
+    for task_desc_path in sorted(resolved_sample.rglob("TaskDescription.md")):
+        if task_desc_path.parent.name == task_id and task_desc_path.exists():
             description = task_desc_path.read_text(encoding="utf-8", errors="replace")
             return jsonify({
                 "success": True,
                 "task_id": task_id,
-                "category": category,
+                "category": _sample_task_category(resolved_sample, task_desc_path),
                 "description": description
             })
 

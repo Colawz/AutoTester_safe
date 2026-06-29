@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-AutoTester — Automated stage tmux launcher and scheduler.
+Harn-LLM Tester — Automated stage tmux launcher and scheduler.
 
 Migrated and adapted from SkillTester's dashboard/AutoTest/auto_stage_loop.py.
 Orchestrates batch testing: selects candidate targets, launches stage workers,
@@ -421,7 +421,7 @@ def parse_runner_plan(raw: str) -> RunnerPlan:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="AutoTester stage launcher scheduler.")
+    parser = argparse.ArgumentParser(description="Harn-LLM Tester stage launcher scheduler.")
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG_PATH)
     parser.add_argument("--no-config", action="store_true")
     parser.add_argument("--stage", choices=sorted(VALID_STAGES), default="exec")

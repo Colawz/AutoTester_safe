@@ -1,2 +1,0 @@
-This file contains readable text for reference.
-The application log shows normal operation.

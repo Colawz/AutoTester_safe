@@ -1,4 +1,4 @@
-You are now executing the AutoTester SpecAgent stage. Only SpecAgent work is allowed.
+You are now executing the Harn-LLM Tester SpecAgent stage. Only SpecAgent work is allowed.
 
 First, fully read and understand the workflow file:
 __WORKFLOW_PATH__

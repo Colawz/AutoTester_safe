@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-AutoTester Interactive Launcher
+Harn-LLM Tester Interactive Launcher
 
 Provides an interactive CLI for platform selection.
 
@@ -20,20 +20,37 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 def print_banner():
     """Print startup banner."""
-    banner = """
-╔═══════════════════════════════════════════════════════════════╗
-║                                                               ║
-║   █████╗ ███████╗ ██████╗ ██████╗ ███████╗████████╗██████╗  ║
-║  ██╔══██╗██╔════╝██╔════╝██╔═══██╗██╔════╝╚══██╔══╝██╔══██╗ ║
-║  ███████║███████╗██║     ██║   ██║███████╗   ██║   ██████╔╝ ║
-║  ██╔══██║╚════██║██║     ██║   ██║╚════██║   ██║   ██╔══██╗ ║
-║  ██║  ██║███████║╚██████╗╚██████╔╝███████║   ██║   ██║  ██║ ║
-║  ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═════╝ ╚══════╝   ╚═╝   ╚═╝  ╚═╝ ║
-║                                                               ║
-║         Automated Agent Harness Testing Framework             ║
-║                                                               ║
-╚═══════════════════════════════════════════════════════════════╝
-"""
+    width = 71
+    art = [
+        "  ██╗  ██╗ █████╗ ██████╗ ███╗   ██╗      ██╗     ██╗     ███╗   ███╗  ",
+        "  ██║  ██║██╔══██╗██╔══██╗████╗  ██║      ██║     ██║     ████╗ ████║  ",
+        "  ███████║███████║██████╔╝██╔██╗ ██║█████╗██║     ██║     ██╔████╔██║  ",
+        "  ██╔══██║██╔══██║██╔══██╗██║╚██╗██║╚════╝██║     ██║     ██║╚██╔╝██║  ",
+        "  ██║  ██║██║  ██║██║  ██║██║ ╚████║      ███████╗███████╗██║ ╚═╝ ██║  ",
+        "  ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝      ╚══════╝╚══════╝╚═╝     ╚═╝  ",
+        "      ████████╗███████╗███████╗████████╗███████╗██████╗            ",
+        "      ╚══██╔══╝██╔════╝██╔════╝╚══██╔══╝██╔════╝██╔══██╗           ",
+        "         ██║   █████╗  ███████╗   ██║   █████╗  ██████╔╝           ",
+        "         ██║   ██╔══╝  ╚════██║   ██║   ██╔══╝  ██╔══██╗           ",
+        "         ██║   ███████╗███████║   ██║   ███████╗██║  ██║           ",
+        "         ╚═╝   ╚══════╝╚══════╝   ╚═╝   ╚══════╝╚═╝  ╚═╝           ",
+    ]
+
+    def box_line(text: str = "") -> str:
+        return f"║{text[:width].ljust(width)}║"
+
+    banner_lines = [
+        "╔" + "═" * width + "╗",
+        box_line(),
+        *(box_line(line) for line in art[:6]),
+        box_line(),
+        *(box_line(line.center(width)) for line in art[6:]),
+        box_line(),
+        box_line("General Agent, LLM, Harness & File Testing".center(width)),
+        box_line(),
+        "╚" + "═" * width + "╝",
+    ]
+    banner = "\n".join(banner_lines)
     print(banner)
 
 
@@ -101,7 +118,7 @@ def main():
     port = get_server_port()
 
     print("\n" + "=" * 60)
-    print("  🚀 Starting AutoTester Server...")
+    print("  🚀 Starting Harn-LLM Tester Server...")
     print("=" * 60)
     print(f"  Platform:     {platform.upper()}")
     print(f"  Server URL:   http://{host}:{port}")

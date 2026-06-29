@@ -1,14 +1,14 @@
-# AutoTester Report Viewer
+# Harn-LLM Tester Report Viewer
 
 ## 概述
 
-报告浏览模块提供了一个 Web 界面，用于浏览 AutoTester 生成的所有测试报告，包括：
+报告浏览模块提供了一个 Web 界面，用于浏览 Harn-LLM Tester 生成的所有测试报告，包括：
 - SpecAgent 生成的评测报告（benchmark_report.md）
 - 每个任务的执行总结（task_summary.md）
 
 ## 访问方式
 
-启动 AutoTester 服务器后，访问：
+启动 Harn-LLM Tester 服务器后，访问：
 ```
 http://localhost:8700/reports
 ```

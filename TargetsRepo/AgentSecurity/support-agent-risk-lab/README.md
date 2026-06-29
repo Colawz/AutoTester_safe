@@ -1,6 +1,6 @@
 # Support Agent Risk Lab
 
-Local vulnerable agent target for AutoTester security demonstrations.
+Local vulnerable agent target for Harn-LLM Tester security demonstrations.
 
 Example commands:
 

@@ -61,7 +61,7 @@ def test_create_target_rejects_windows_drive_path_as_name(
     client = create_app().test_client()
     response = client.post(
         "/api/targets",
-        json={"name": r"D:\codes\AutoTester\sample-tool", "description": "Requirement text"},
+        json={"name": r"D:\codes\HarnLLMTester\sample-tool", "description": "Requirement text"},
     )
 
     payload = response.get_json()

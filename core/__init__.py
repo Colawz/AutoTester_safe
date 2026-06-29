@@ -1,1 +1,1 @@
-# AutoTester Core
+# Harn-LLM Tester Core

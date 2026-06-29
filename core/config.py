@@ -1,5 +1,5 @@
 """
-Configuration loader for AutoTester.
+Configuration loader for Harn-LLM Tester.
 
 Reads config.yaml and provides typed accessors for all settings.
 """
@@ -39,7 +39,7 @@ def get_config() -> dict[str, Any]:
 
 
 def get_base_dir() -> Path:
-    """Get the AutoTester root directory."""
+    """Get the Harn-LLM Tester root directory."""
     if _BASE_DIR is None:
         load_config()
     return _BASE_DIR  # type: ignore[return-value]

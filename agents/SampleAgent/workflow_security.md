@@ -2,7 +2,7 @@
 
 ## 概述
 
-这是 AutoTester Security Edition 的 SampleAgent 工作流程，专门用于生成安全测试探针。
+这是 Harn-LLM Tester Security Edition 的 SampleAgent 工作流程，专门用于生成安全测试探针。
 **与标准版的区别**：安全探针**不需要生成 Grader 目录**，因为安全测试的判定由 SpecAgent 根据 evidence.json 完成。
 
 ---

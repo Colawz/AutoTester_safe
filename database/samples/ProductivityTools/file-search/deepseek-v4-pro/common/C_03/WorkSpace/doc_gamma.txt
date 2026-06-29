@@ -1,4 +1,0 @@
-We are migrating from banana to cherry framework.
-banana had performance limitations at scale.
-The new architecture removes banana dependencies.
-cherry offers better throughput.

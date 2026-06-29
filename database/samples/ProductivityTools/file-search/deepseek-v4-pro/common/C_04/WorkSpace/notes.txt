@@ -1,4 +1,0 @@
-DEBUG_MODE should be turned off in production.
-The server port 8080 may conflict with other services.
-Remember to disable debug mode before deployment.
-Check config.json for the database URL.

@@ -1,5 +1,5 @@
 """
-AutoTester Flask API application.
+Harn-LLM Tester Flask API application.
 
 Serves the REST API and dashboard static files.
 """
@@ -81,7 +81,7 @@ def main():
     app = create_app()
     host = app.config.get("HOST", "127.0.0.1")
     port = int(app.config.get("PORT", 6300))
-    print(f"AutoTester API server: http://{host}:{port}")
+    print(f"Harn-LLM Tester API server: http://{host}:{port}")
     app.run(host=host, port=port, debug=True)
 
 

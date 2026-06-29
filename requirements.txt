@@ -1,4 +1,4 @@
-# AutoTester 依赖
+# Harn-LLM Tester 依赖
 # 安装: pip install -r requirements.txt
 
 # Web 框架

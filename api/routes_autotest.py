@@ -1,5 +1,5 @@
 """
-AutoTest controller routes for AutoTester.
+AutoTest controller routes for Harn-LLM Tester.
 """
 
 from __future__ import annotations

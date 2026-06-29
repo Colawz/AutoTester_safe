@@ -1,3 +1,0 @@
-This is the app configuration documentation.
-Settings can be found in the .env file.
-Database connection uses default localhost.

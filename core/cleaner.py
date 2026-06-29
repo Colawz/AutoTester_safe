@@ -1,5 +1,5 @@
 """
-Data cleanup operations for AutoTester.
+Data cleanup operations for Harn-LLM Tester.
 
 Migrated from SkillTester's delete_skill_stage_data() and delete_exec_track_data().
 Deletes database output directories before re-launching stages.

@@ -1,5 +1,5 @@
 """
-Prompt template filling for AutoTester.
+Prompt template filling for Harn-LLM Tester.
 
 Migrated from SkillTester's _build_stage_prompt().
 Builds prompts by filling template placeholders with target-specific paths.

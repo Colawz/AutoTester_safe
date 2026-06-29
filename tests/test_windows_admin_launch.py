@@ -33,9 +33,9 @@ def test_admin_relaunch_uses_current_python_and_script(monkeypatch):
     monkeypatch.setattr(windows_admin.sys, "executable", r"C:\Python311\python.exe")
 
     result = windows_admin.relaunch_as_admin(
-        Path(r"D:\codes\AutoTester_safe-main\start.py"),
+        Path(r"D:\codes\HarnLLMTester-main\start.py"),
         ["--platform", "windows", "--port", "8700"],
-        cwd=Path(r"D:\codes\AutoTester_safe-main"),
+        cwd=Path(r"D:\codes\HarnLLMTester-main"),
     )
 
     assert result is True
@@ -43,7 +43,7 @@ def test_admin_relaunch_uses_current_python_and_script(monkeypatch):
         None,
         "runas",
         r"C:\Python311\python.exe",
-        r'D:\codes\AutoTester_safe-main\start.py --platform windows --port 8700',
-        r"D:\codes\AutoTester_safe-main",
+        r'D:\codes\HarnLLMTester-main\start.py --platform windows --port 8700',
+        r"D:\codes\HarnLLMTester-main",
         1,
     )]

@@ -33,6 +33,23 @@ def test_windows_health_done_when_log_has_clean_finish_marker(tmp_path: Path):
     assert health["terminal_finished"] is True
 
 
+def test_windows_health_done_when_log_has_new_brand_finish_marker(tmp_path: Path):
+    log_path = tmp_path / "launch.log"
+    log_path.write_text(
+        "Finished at: now\nExit status: 0\nHarn-LLM Tester runner command finished. Press Enter to close this window.\n",
+        encoding="utf-8",
+    )
+
+    health = wtm.classify_windows_terminal_health(
+        {"pid": 1234, "script_path": str(tmp_path / "run.ps1"), "log_path": str(log_path)},
+        pid_running=True,
+    )
+
+    assert health["status"] == "done"
+    assert health["exit_status"] == 0
+    assert health["terminal_finished"] is True
+
+
 def test_windows_health_failed_when_log_has_nonzero_exit(tmp_path: Path):
     log_path = tmp_path / "launch.log"
     log_path.write_text(

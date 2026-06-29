@@ -1,5 +1,0 @@
-Testing banana integration requires:
-Setup banana cluster with 3 nodes.
-Configure banana authentication.
-Run banana benchmark suite.
-Monitor banana metrics.

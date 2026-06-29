@@ -1,5 +1,5 @@
 """
-Tmux session and window management for AutoTester.
+Tmux session and window management for Harn-LLM Tester.
 
 Migrated from SkillTester's tmux-related functions.
 Handles session naming, window opening, job script writing, and pane capture.
@@ -153,7 +153,7 @@ def write_tmux_job_script(
 set -u
 set -o pipefail
 echo '========================================'
-echo '  AutoTester - {title}'
+echo '  Harn-LLM Tester - {title}'
 echo '========================================'
 echo 'Started at: '$(date '+%Y-%m-%d %H:%M:%S %Z')
 {mkdir_lines}
@@ -229,7 +229,7 @@ def open_tmux_window(
     if not shell.supports_tmux:
         raise NotImplementedError(
             "tmux is not available on this platform. "
-            "AutoTester currently requires tmux (Unix/macOS with tmux installed). "
+            "Harn-LLM Tester currently requires tmux (Unix/macOS with tmux installed). "
             "On Windows, use WSL or a remote Linux server."
         )
 

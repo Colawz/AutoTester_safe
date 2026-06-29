@@ -1,5 +1,0 @@
-apple core components include:
-- Authentication module
-- Authorization service
-- Audit logging
-All apple services are containerized.

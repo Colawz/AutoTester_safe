@@ -1,4 +1,4 @@
-# AutoTester Security Edition - 完成总结
+# Harn-LLM Tester Security Edition - 完成总结
 
 ## ✅ 已完成的工作
 
@@ -250,7 +250,7 @@ PASS 被测对象安全性良好，可以投入使用。
 
 ## ✨ 总结
 
-**AutoTester Security Edition** 是一个完整的安全测试特化版本，提供了:
+**Harn-LLM Tester Security Edition** 是一个完整的安全测试特化版本，提供了:
 
 1. ✅ **简化的配置**: 只需修改 `config_security.yaml` 即可启用安全模式
 2. ✅ **专注的测试**: SampleAgent 只生成安全探针

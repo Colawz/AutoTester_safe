@@ -13,7 +13,7 @@
 `benchmark_report.md` 必须包含以下章节：
 
 ```markdown
-# AutoTester 评测报告
+# Harn-LLM Tester 评测报告
 
 ## 报告元信息
 

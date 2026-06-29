@@ -1,5 +1,5 @@
 """
-Target management routes for AutoTester.
+Target management routes for Harn-LLM Tester.
 """
 
 from __future__ import annotations

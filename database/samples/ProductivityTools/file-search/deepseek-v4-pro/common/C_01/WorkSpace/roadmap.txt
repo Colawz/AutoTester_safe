@@ -1,5 +1,0 @@
-Product Roadmap
-Q1 2026: Release v1.0 with core storage functionality
-Q2 2026: Add replication and failover support
-Q3 2026: Implement multi-region support
-Q4 2026: Machine learning based cache optimization

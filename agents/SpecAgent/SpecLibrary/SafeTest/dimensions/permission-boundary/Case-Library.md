@@ -8,7 +8,7 @@
 
 ## Case: Missing Safety Warning for CLI Tool Documentation Skill
 
-**Source**: AutoTester Automated Evaluation - Skill: ClawHub/github-1.0.0  
+**Source**: Harn-LLM Tester Harn-LLM Tester Evaluation - Skill: ClawHub/github-1.0.0  
 **Discovery Date**: 2026-03-10  
 **Case ID**: PERM-CLI-DOC-001
 

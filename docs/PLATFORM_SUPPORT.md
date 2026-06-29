@@ -1,8 +1,8 @@
-# AutoTester 平台支持与终端管理
+# Harn-LLM Tester 平台支持与终端管理
 
 ## 概述
 
-AutoTester 现已支持跨平台运行，提供统一的终端管理接口，支持：
+Harn-LLM Tester 现已支持跨平台运行，提供统一的终端管理接口，支持：
 - **macOS**: tmux（原生支持）
 - **Linux**: tmux（原生支持）
 - **Windows**: Windows Terminal / PowerShell（新增支持）
@@ -172,7 +172,7 @@ _windows_keep_awake_stop()
 set -u
 set -o pipefail
 echo '========================================'
-echo '  AutoTester - {title}'
+echo '  Harn-LLM Tester - {title}'
 echo '========================================'
 echo 'Started at: '$(date '+%Y-%m-%d %H:%M:%S %Z')
 
@@ -191,9 +191,9 @@ exec "${SHELL:-/bin/bash}" -l
 ### PowerShell 脚本（Windows）
 
 ```powershell
-# AutoTester Job Script
+# Harn-LLM Tester Job Script
 Write-Host "========================================"
-Write-Host "  AutoTester - {title}"
+Write-Host "  Harn-LLM Tester - {title}"
 Write-Host "========================================"
 Write-Host "Started at: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss zzz')"
 
@@ -228,9 +228,9 @@ Write-Host "Exit status: $LASTEXITCODE"
 
 ### 从 SkillTester 迁移
 
-AutoTester 的平台管理模块完全兼容 SkillTester 的设计：
+Harn-LLM Tester 的平台管理模块完全兼容 SkillTester 的设计：
 
-| SkillTester | AutoTester |
+| SkillTester | Harn-LLM Tester |
 |------------|-----------|
 | `dashboard.platinfo` | `core.platform_manager` |
 | `SKILLTEST_PLATFORM` | `AUTOTEST_PLATFORM` |
@@ -239,13 +239,13 @@ AutoTester 的平台管理模块完全兼容 SkillTester 的设计：
 
 ### API 兼容性
 
-所有 SkillTester 的平台检测 API 在 AutoTester 中保持相同签名：
+所有 SkillTester 的平台检测 API 在 Harn-LLM Tester 中保持相同签名：
 
 ```python
 # SkillTester
 from dashboard.platinfo import is_windows, is_macos, is_linux
 
-# AutoTester
+# Harn-LLM Tester
 from core.platform_manager import is_windows, is_macos, is_linux
 ```
 

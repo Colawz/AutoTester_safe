@@ -1,4 +1,0 @@
-apple and banana are both used in this project.
-The apple module interfaces with banana protocol.
-banana provides the message queue layer.
-apple handles the user interface.

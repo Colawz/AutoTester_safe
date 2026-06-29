@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-AutoTester Quick Launcher (with interactive platform selection)
+Harn-LLM Tester Quick Launcher (with interactive platform selection)
 
 Usage:
     python3 start.py                    # Interactive platform selection
@@ -33,20 +33,37 @@ def detect_platform() -> str:
 
 def print_banner():
     """Print startup banner."""
-    banner = """
-╔═══════════════════════════════════════════════════════════════╗
-║                                                               ║
-║   █████╗ ███████╗ ██████╗ ██████╗ ███████╗████████╗██████╗  ║
-║  ██╔══██╗██╔════╝██╔════╝██╔═══██╗██╔════╝╚══██╔══╝██╔══██╗ ║
-║  ███████║███████╗██║     ██║   ██║███████╗   ██║   ██████╔╝ ║
-║  ██╔══██║╚════██║██║     ██║   ██║╚════██║   ██║   ██╔══██╗ ║
-║  ██║  ██║███████║╚██████╗╚██████╔╝███████║   ██║   ██║  ██║ ║
-║  ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═════╝ ╚══════╝   ╚═╝   ╚═╝  ╚═╝ ║
-║                                                               ║
-║         Automated Agent Harness Testing Framework             ║
-║                                                               ║
-╚═══════════════════════════════════════════════════════════════╝
-"""
+    width = 71
+    art = [
+        "  ██╗  ██╗ █████╗ ██████╗ ███╗   ██╗      ██╗     ██╗     ███╗   ███╗  ",
+        "  ██║  ██║██╔══██╗██╔══██╗████╗  ██║      ██║     ██║     ████╗ ████║  ",
+        "  ███████║███████║██████╔╝██╔██╗ ██║█████╗██║     ██║     ██╔████╔██║  ",
+        "  ██╔══██║██╔══██║██╔══██╗██║╚██╗██║╚════╝██║     ██║     ██║╚██╔╝██║  ",
+        "  ██║  ██║██║  ██║██║  ██║██║ ╚████║      ███████╗███████╗██║ ╚═╝ ██║  ",
+        "  ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝      ╚══════╝╚══════╝╚═╝     ╚═╝  ",
+        "      ████████╗███████╗███████╗████████╗███████╗██████╗            ",
+        "      ╚══██╔══╝██╔════╝██╔════╝╚══██╔══╝██╔════╝██╔══██╗           ",
+        "         ██║   █████╗  ███████╗   ██║   █████╗  ██████╔╝           ",
+        "         ██║   ██╔══╝  ╚════██║   ██║   ██╔══╝  ██╔══██╗           ",
+        "         ██║   ███████╗███████║   ██║   ███████╗██║  ██║           ",
+        "         ╚═╝   ╚══════╝╚══════╝   ╚═╝   ╚══════╝╚═╝  ╚═╝           ",
+    ]
+
+    def box_line(text: str = "") -> str:
+        return f"║{text[:width].ljust(width)}║"
+
+    banner_lines = [
+        "╔" + "═" * width + "╗",
+        box_line(),
+        *(box_line(line) for line in art[:6]),
+        box_line(),
+        *(box_line(line.center(width)) for line in art[6:]),
+        box_line(),
+        box_line("General Agent, LLM, Harness & File Testing".center(width)),
+        box_line(),
+        "╚" + "═" * width + "╝",
+    ]
+    banner = "\n".join(banner_lines)
     print(banner)
 
 
@@ -96,7 +113,7 @@ def is_interactive_terminal() -> bool:
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="AutoTester - Automated Agent Harness Testing Framework",
+        description="Harn-LLM Tester - General Agent, LLM, Harness & File Testing",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
@@ -173,7 +190,7 @@ def main():
 
     # Print startup info
     print("\n" + "=" * 60)
-    print("  🚀 Starting AutoTester Server...")
+    print("  🚀 Starting Harn-LLM Tester Server...")
     print("=" * 60)
     print(f"  Platform:     {platform.upper()}")
     print(f"  Server URL:   http://{host}:{port}")

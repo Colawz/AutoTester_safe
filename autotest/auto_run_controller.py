@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-AutoTester - Single Target Auto-Run Controller
+Harn-LLM Tester - Single Target Auto-Run Controller
 
 Continuously monitors a single target's status and automatically
 launches the next stage (sample -> exec -> spec) when the current

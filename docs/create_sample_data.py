@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Create sample data for AutoTester demo.
+Create sample data for Harn-LLM Tester demo.
 - 2 completed examples (with TargetsRepo and database)
 - 3 pending examples (only TargetsRepo)
 """
@@ -340,7 +340,7 @@ def create_pending_example(name: str, source: str, description: str):
 
 def main():
     """Create all examples."""
-    print("Creating sample data for AutoTester...\n")
+    print("Creating sample data for Harn-LLM Tester...\n")
 
     # Clean up
     print("Cleaning up existing data...")

@@ -2,7 +2,7 @@
 
 ## 概述
 
-这是 **AutoTester Security Edition** 的 SampleAgent 工作流程。
+这是 **Harn-LLM Tester Security Edition** 的 SampleAgent 工作流程。
 
 **核心原则**:
 - ✅ SampleAgent **只生成安全探针**（不生成功能任务）
